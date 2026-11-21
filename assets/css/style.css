@@ -1,0 +1,447 @@
+:root {
+  --bg-cream: #f6f1e7;
+  --bg-card: #fffdf9;
+  --bg-peach-nav: #f5e5d5;
+  --bg-visit-cream: #fbf6ee;
+  --moss-dark: #2e4a3e;
+  --moss-mid: #3f6253;
+  --moss-soft: #e5ece7;
+  --footer-moss: #4b5f47;
+  --ink-main: #232824;
+  --ink-muted: #667068;
+  --border-soft: #e3dacb;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-cream);
+  color: var(--ink-main);
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+h1,
+h2,
+h3,
+.font-serif-brand {
+  font-family: "Fraunces", serif;
+}
+
+/* Navbar */
+.navbar-cafe-top {
+  background-color: var(--bg-peach-nav);
+  border-bottom: 1px solid rgba(46, 74, 62, 0.08);
+}
+
+.navbar-cafe-top .navbar-brand,
+.navbar-cafe-top .nav-link {
+  color: var(--ink-main);
+  font-size: 0.92rem;
+}
+
+.navbar-cafe-top .nav-link:hover,
+.navbar-cafe-top .nav-link.active {
+  color: var(--moss-mid);
+  font-weight: 600;
+}
+
+.login-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #8c8a84;
+  display: inline-block;
+}
+
+/* Hero */
+.landing-hero {
+  position: relative;
+  min-height: calc(100vh - 74px);
+  background-color: #2a241f;
+  background-image: url("https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+  color: #ffffff;
+}
+
+.landing-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(20, 17, 14, 0.68) 0%,
+    rgba(20, 17, 14, 0.35) 55%,
+    rgba(20, 17, 14, 0.15) 100%
+  );
+}
+
+.landing-hero-content {
+  position: relative;
+  z-index: 1;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.landing-kicker {
+  font-size: 0.95rem;
+  color: #f5e5d5;
+}
+
+.landing-hero-title {
+  font-size: clamp(2.5rem, 5vw, 4.3rem);
+  line-height: 1.12;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.btn-landing-outline {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.18);
+  border-radius: 0;
+  padding: 0.7rem 2.3rem;
+  font-size: 0.92rem;
+  transition: all 0.2s ease;
+}
+
+.btn-landing-outline:hover {
+  background-color: #ffffff;
+  color: var(--ink-main);
+  border-color: #ffffff;
+}
+
+/* Các khối Eat / Drink / Enjoy */
+.split-band {
+  background-color: #ffffff;
+}
+
+.split-text-col {
+  min-height: 460px;
+}
+
+.split-text-inner {
+  max-width: 440px;
+  padding: 3.5rem 2.25rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.split-heading {
+  font-size: 3.1rem;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ink-main);
+}
+
+.split-subtitle {
+  font-size: 1rem;
+  color: var(--ink-main);
+}
+
+.split-desc {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--ink-muted);
+}
+
+.btn-split-dark {
+  border: 1px solid #232824;
+  color: #232824;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0.55rem 1.8rem;
+  font-size: 0.88rem;
+  transition: all 0.2s ease;
+}
+
+.btn-split-dark:hover {
+  background-color: #232824;
+  color: #ffffff;
+}
+
+.split-media-col {
+  min-height: 460px;
+  overflow: hidden;
+}
+
+.split-img {
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Thu gọn khối Eat và Drink, giữ nguyên size của khối Enjoy */
+/* Khối Eat và Drink theo kích thước chỉ định */
+.split-band--compact .split-text-col,
+.split-band--compact .split-media-col {
+  min-height: 590px;
+}
+
+.split-band--compact .split-img {
+  width: 100%;
+  height: 590px;
+  max-height: 590px;
+  object-fit: cover;
+  object-position: 50% 50%;
+  display: block;
+}
+
+.split-band--compact .split-text-inner {
+  padding: 3rem 2.5rem;
+}
+
+.split-band--compact .split-heading {
+  font-size: 2.9rem;
+}
+
+.split-band--compact .split-subtitle {
+  font-size: 1rem;
+}
+
+.split-band--compact .split-desc {
+  font-size: 0.88rem;
+  margin-bottom: 1.4rem !important;
+}
+
+/* Địa chỉ & Giờ mở cửa */
+.visit-band {
+  background-color: var(--bg-visit-cream);
+}
+
+.visit-main-title {
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 500;
+  color: var(--ink-main);
+}
+
+.visit-col-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--ink-main);
+}
+
+.visit-col-text {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--ink-muted);
+}
+
+.visit-divider {
+  width: 1px;
+  height: 110px;
+  background-color: #d7cebf;
+}
+
+/* Dải 5 ảnh ngang */
+.gallery-strip {
+  width: 100%;
+}
+
+.gallery-strip .row {
+  flex-wrap: nowrap;
+}
+
+.gallery-cell {
+  position: relative;
+  flex: 0 0 20%;
+  max-width: 20%;
+  height: 220px;
+  overflow: hidden;
+  z-index: 16;
+}
+
+.gallery-cell img {
+  outline: none;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: center;
+  overflow: visible;
+  z-index: 16;
+  transition: opacity 0.4s ease;
+  display: block;
+}
+
+/* 5 khoảng trắng dưới dải 5 ảnh trước footer */
+.gallery-spacer {
+  height: 24px;
+  background-color: var(--bg-cream);
+}
+
+/* Footer xanh rêu */
+.footer-moss-main {
+  background-color: var(--footer-moss);
+  color: #ffffff;
+  padding-top: 64px;
+  padding-bottom: 58px;
+}
+
+.footer-newsletter-form {
+  max-width: 470px;
+}
+
+.footer-heading {
+  font-family: "Fraunces", serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 18px;
+}
+
+.footer-subtext {
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 24px;
+}
+
+.footer-contact-group {
+  margin-bottom: 26px;
+}
+
+.footer-email-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 6px;
+}
+
+.footer-input {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 0;
+  color: #ffffff;
+  height: 40px;
+  margin-bottom: 14px;
+}
+
+.footer-input:focus {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.footer-agree-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.footer-check-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.footer-checkbox {
+  float: none !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  width: 16px;
+  height: 16px;
+  border-radius: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background-color: transparent;
+  flex-shrink: 0;
+}
+
+.footer-checkbox:checked {
+  background-color: #ffffff;
+  border-color: #ffffff;
+}
+
+.footer-agree-text {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+}
+
+.btn-footer-outline {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  color: #ffffff;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0.45rem 2.1rem;
+  font-size: 0.84rem;
+  flex-shrink: 0;
+}
+
+.btn-footer-outline:hover {
+  background-color: #ffffff;
+  color: var(--footer-moss);
+}
+
+.footer-social-list li {
+  margin-bottom: 8px;
+}
+
+.footer-social-list li:last-child {
+  margin-bottom: 0;
+}
+
+.footer-social-list a {
+  font-family: "Fraunces", serif;
+  font-size: clamp(2rem, 3.2vw, 2.85rem);
+  font-weight: 500;
+  color: #ffffff;
+  text-decoration: none;
+  line-height: 1.22;
+}
+
+.footer-social-list a:hover {
+  color: var(--bg-peach-nav);
+}
+
+/* Style trang thực đơn & thẻ món */
+.text-coffee-muted {
+  color: var(--ink-muted);
+}
+
+.border-coffee-soft {
+  border-color: var(--border-soft) !important;
+}
+
+.badge-moss {
+  background-color: var(--moss-soft);
+  color: var(--moss-dark);
+  font-weight: 600;
+}
+
+.btn-moss {
+  background-color: var(--moss-mid);
+  border-color: var(--moss-mid);
+  color: #fffdf9;
+}
+
+.btn-moss:hover {
+  background-color: var(--moss-dark);
+  border-color: var(--moss-dark);
+  color: #fffdf9;
+}
+
+.card-coffee {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.card-coffee:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(46, 74, 62, 0.08);
+}
+
+.price-moss {
+  color: var(--moss-dark);
+  font-weight: 700;
+}
