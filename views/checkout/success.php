@@ -4,7 +4,12 @@
         Mã đơn hàng của bạn là <strong class="text-dark"><?= htmlspecialchars($orderCode) ?></strong>.
         Đơn đang ở trạng thái <strong>Chờ xác nhận</strong>.
     </p>
-    <div class="d-flex justify-content-center gap-2 mt-2">
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
+        <?php if (!empty($_SESSION['user'])): ?>
+            <a href="<?= BASE_URL ?>/?c=order&a=index" class="btn btn-dark rounded-pill px-4">
+                Theo dõi đơn hàng
+            </a>
+        <?php endif; ?>
         <a href="<?= BASE_URL ?>/?c=home&a=menu" class="btn btn-moss rounded-pill px-4">
             Tiếp tục đặt món
         </a>
