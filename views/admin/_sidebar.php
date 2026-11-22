@@ -4,7 +4,8 @@ $navItems = [
     'dashboard' => ['label' => 'Tổng quan',              'href' => BASE_URL . '/?c=admin&a=dashboard'],
     'index'     => ['label' => 'Quản trị đơn hàng',      'href' => BASE_URL . '/?c=admin&a=index'],
     'catalog'   => ['label' => 'Quản lý món & danh mục', 'href' => BASE_URL . '/?c=admin&a=catalog'],
-];
+    'customers'  => ['label' => 'Quản lý khách hàng',     'href' => BASE_URL . '/?c=admin&a=customers'],
+    ];
 ?>
 
 <aside class="admin-sidebar border-end">

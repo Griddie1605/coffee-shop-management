@@ -461,3 +461,145 @@ function adminToggleCategory(): void
     header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
     exit;
 }
+
+function adminCustomers(): void
+{
+    adminRequireStaff();
+
+    $keyword = trim((string) ($_GET['q'] ?? ''));
+    $selectedCustomerId = (int) ($_GET['customer_id'] ?? 0);
+
+    $pdo = db_connect();
+
+    $sql = "SELECT
+                nd.id,
+                nd.ho_ten,
+                nd.email,
+                nd.so_dien_thoai,
+                nd.dia_chi,
+                nd.trang_thai_hoat_dong,
+                nd.ngay_tao,
+                COUNT(dh.id) AS total_orders,
+                COALESCE(SUM(CASE WHEN dh.trang_thai_don != 'da_huy' THEN dh.tong_thanh_toan ELSE 0 END), 0) AS total_spent
+            FROM nguoi_dung nd
+            LEFT JOIN don_hang dh ON dh.nguoi_dung_id = nd.id
+            WHERE nd.vai_tro = 'khach_hang'";
+    $params = [];
+
+    if ($keyword !== '') {
+        $sql .= " AND (nd.ho_ten LIKE :kw_name OR nd.email LIKE :kw_email OR nd.so_dien_thoai LIKE :kw_phone)";
+        $like = '%' . $keyword . '%';
+        $params[':kw_name'] = $like;
+        $params[':kw_email'] = $like;
+        $params[':kw_phone'] = $like;
+    }
+
+    $sql .= " GROUP BY nd.id, nd.ho_ten, nd.email, nd.so_dien_thoai, nd.dia_chi, nd.trang_thai_hoat_dong, nd.ngay_tao
+              ORDER BY nd.ngay_tao DESC, nd.id DESC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $customers = $stmt->fetchAll();
+
+    $selectedCustomer = null;
+    $customerOrders = [];
+    $orderItemsByOrderId = [];
+
+    if ($selectedCustomerId > 0) {
+        foreach ($customers as $c) {
+            if ((int) $c['id'] === $selectedCustomerId) {
+                $selectedCustomer = $c;
+                break;
+            }
+        }
+
+        if ($selectedCustomer === null) {
+            $stmtSingle = $pdo->prepare(
+                "SELECT id, ho_ten, email, so_dien_thoai, dia_chi, trang_thai_hoat_dong, ngay_tao
+                 FROM nguoi_dung
+                 WHERE id = :id AND vai_tro = 'khach_hang'
+                 LIMIT 1"
+            );
+            $stmtSingle->execute([':id' => $selectedCustomerId]);
+            $found = $stmtSingle->fetch();
+            if ($found) {
+                $selectedCustomer = $found;
+            }
+        }
+
+        if ($selectedCustomer !== null) {
+            $stmtOrders = $pdo->prepare(
+                "SELECT id, ma_don_hang, ten_nguoi_nhan, sdt_nguoi_nhan, hinh_thuc_nhan,
+                        dia_chi_giao, phuong_thuc_thanh_toan, tam_tinh, tien_giam,
+                        tong_thanh_toan, trang_thai_don, ghi_chu, ngay_tao
+                 FROM don_hang
+                 WHERE nguoi_dung_id = :uid
+                 ORDER BY ngay_tao DESC, id DESC"
+            );
+            $stmtOrders->execute([':uid' => (int) $selectedCustomer['id']]);
+            $customerOrders = $stmtOrders->fetchAll();
+
+            if (!empty($customerOrders)) {
+                $orderIds = array_map(static fn($o) => (int) $o['id'], $customerOrders);
+                $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+                $stmtItems = $pdo->prepare(
+                    "SELECT don_hang_id, ten_san_pham, ten_size, don_gia, so_luong, thanh_tien
+                     FROM chi_tiet_don_hang
+                     WHERE don_hang_id IN ($placeholders)
+                     ORDER BY id ASC"
+                );
+                $stmtItems->execute($orderIds);
+                foreach ($stmtItems->fetchAll() as $item) {
+                    $orderItemsByOrderId[(int) $item['don_hang_id']][] = $item;
+                }
+            }
+        }
+    }
+
+    render('admin/customers', [
+        'pageTitle' => 'Quản lý khách hàng - 47th cafe',
+        'customers' => $customers,
+        'keyword' => $keyword,
+        'selectedCustomer' => $selectedCustomer,
+        'customerOrders' => $customerOrders,
+        'orderItemsByOrderId' => $orderItemsByOrderId,
+        'flashSuccess' => $_SESSION['admin_success'] ?? '',
+        'flashError' => $_SESSION['admin_error'] ?? '',
+    ]);
+    unset($_SESSION['admin_success'], $_SESSION['admin_error']);
+}
+
+function adminToggleCustomerStatus(): void
+{
+    adminRequireStaff();
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Location: ' . BASE_URL . '/?c=admin&a=customers');
+        exit;
+    }
+
+    $id = (int) ($_POST['id'] ?? 0);
+    $q = trim((string) ($_POST['q'] ?? ''));
+    $selectedId = (int) ($_POST['customer_id'] ?? 0);
+
+    if ($id > 0) {
+        $pdo = db_connect();
+        $stmt = $pdo->prepare(
+            "UPDATE nguoi_dung
+             SET trang_thai_hoat_dong = IF(trang_thai_hoat_dong = 1, 0, 1)
+             WHERE id = :id AND vai_tro = 'khach_hang'"
+        );
+        $stmt->execute([':id' => $id]);
+        $_SESSION['admin_success'] = 'Đã cập nhật trạng thái tài khoản khách hàng.';
+    }
+
+    $query = ['c' => 'admin', 'a' => 'customers'];
+    if ($q !== '') {
+        $query['q'] = $q;
+    }
+    if ($selectedId > 0) {
+        $query['customer_id'] = $selectedId;
+    }
+
+    header('Location: ' . BASE_URL . '/?' . http_build_query($query));
+    exit;
+}
