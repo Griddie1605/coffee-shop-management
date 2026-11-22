@@ -7,7 +7,6 @@
             Delicious Eats &amp; Coffee
         </h1>
         <div class="d-flex flex-wrap gap-3">
-            <a href="<?= BASE_URL ?>/?c=home&a=menu" class="btn btn-landing-outline">Order Online</a>
             <a href="<?= BASE_URL ?>/?c=home&a=menu" class="btn btn-landing-outline">Our Menu</a>
         </div>
     </div>
