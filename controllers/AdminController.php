@@ -399,14 +399,74 @@ function adminDashboard(): void
 
     $pdo = db_connect();
 
-    $orderStats = $pdo->query(
+    $range = (string) ($_GET['range'] ?? 'all');
+    $fromDate = trim((string) ($_GET['from_date'] ?? ''));
+    $toDate = trim((string) ($_GET['to_date'] ?? ''));
+
+    date_default_timezone_set('Asia/Ho_Chi_Minh');
+
+    $today = date('Y-m-d');
+    if ($range === '7d') {
+        $fromDate = date('Y-m-d', strtotime($today . ' -6 days'));
+        $toDate = $today;
+    } elseif ($range === '30d') {
+        $fromDate = date('Y-m-d', strtotime($today . ' -29 days'));
+        $toDate = $today;
+    }
+
+    $validDate = static fn(string $d): bool => (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $d);
+
+    if ($range === '7d') {
+        $fromDate = date('Y-m-d', strtotime('-6 days'));
+        $toDate = date('Y-m-d');
+    } elseif ($range === '30d') {
+        $fromDate = date('Y-m-d', strtotime('-29 days'));
+        $toDate = date('Y-m-d');
+    } else {
+        if (!$validDate($fromDate)) {
+            $fromDate = '';
+        }
+        if (!$validDate($toDate)) {
+            $toDate = '';
+        }
+        if ($fromDate !== '' || $toDate !== '') {
+            $range = 'custom';
+        } else {
+            $range = 'all';
+        }
+    }
+
+    $whereParts = [];
+    $params = [];
+    if ($fromDate !== '') {
+        $whereParts[] = "DATE(dh.ngay_tao) >= :from_date";
+        $params[':from_date'] = $fromDate;
+    }
+    if ($toDate !== '') {
+        $whereParts[] = "DATE(dh.ngay_tao) <= :to_date";
+        $params[':to_date'] = $toDate;
+    }
+    $whereSql = !empty($whereParts) ? (' WHERE ' . implode(' AND ', $whereParts)) : '';
+
+    $stmtStats = $pdo->prepare(
         "SELECT
             COUNT(*) AS total_orders,
-            SUM(CASE WHEN trang_thai_don = 'cho_xac_nhan' THEN 1 ELSE 0 END) AS pending_orders,
-            SUM(CASE WHEN trang_thai_don = 'dang_pha_che' THEN 1 ELSE 0 END) AS brewing_orders,
-            SUM(CASE WHEN trang_thai_don = 'hoan_thanh' THEN tong_thanh_toan ELSE 0 END) AS completed_revenue
-         FROM don_hang"
-    )->fetch() ?: [];
+            SUM(CASE WHEN dh.trang_thai_don = 'cho_xac_nhan' THEN 1 ELSE 0 END) AS pending_orders,
+            SUM(CASE WHEN dh.trang_thai_don = 'dang_pha_che' THEN 1 ELSE 0 END) AS brewing_orders,
+            SUM(CASE WHEN dh.trang_thai_don = 'hoan_thanh' THEN 1 ELSE 0 END) AS completed_orders,
+            SUM(CASE WHEN dh.trang_thai_don = 'da_huy' THEN 1 ELSE 0 END) AS cancelled_orders,
+            COALESCE(SUM(CASE WHEN dh.trang_thai_don = 'hoan_thanh' THEN dh.tong_thanh_toan ELSE 0 END), 0) AS completed_revenue,
+            COALESCE(SUM(CASE WHEN dh.trang_thai_don != 'da_huy' THEN dh.tong_thanh_toan ELSE 0 END), 0) AS active_revenue,
+            COUNT(CASE WHEN dh.trang_thai_don != 'da_huy' THEN 1 END) AS active_orders_count
+         FROM don_hang dh
+         {$whereSql}"
+    );
+    $stmtStats->execute($params);
+    $orderStats = $stmtStats->fetch() ?: [];
+
+    $activeOrdersCount = (int) ($orderStats['active_orders_count'] ?? 0);
+    $activeRevenue = (float) ($orderStats['active_revenue'] ?? 0);
+    $avgOrderValue = $activeOrdersCount > 0 ? ($activeRevenue / $activeOrdersCount) : 0.0;
 
     $catalogStats = $pdo->query(
         "SELECT
@@ -415,18 +475,65 @@ function adminDashboard(): void
             (SELECT COUNT(*) FROM san_pham) AS total_products"
     )->fetch() ?: [];
 
-    $recentOrders = $pdo->query(
-        "SELECT id, ma_don_hang, ten_nguoi_nhan, tong_thanh_toan, trang_thai_don, ngay_tao
-         FROM don_hang
-         ORDER BY ngay_tao DESC, id DESC
+    $stmtDaily = $pdo->prepare(
+        "SELECT
+            DATE(dh.ngay_tao) AS order_date,
+            COUNT(*) AS orders_count,
+            COALESCE(SUM(CASE WHEN dh.trang_thai_don != 'da_huy' THEN dh.tong_thanh_toan ELSE 0 END), 0) AS revenue
+         FROM don_hang dh
+         {$whereSql}
+         GROUP BY DATE(dh.ngay_tao)
+         ORDER BY order_date DESC
+         LIMIT 15"
+    );
+    $stmtDaily->execute($params);
+    $dailyRevenue = $stmtDaily->fetchAll();
+
+    $topWhereParts = ["dh.trang_thai_don != 'da_huy'"];
+    if ($fromDate !== '') {
+        $topWhereParts[] = "DATE(dh.ngay_tao) >= :from_date";
+    }
+    if ($toDate !== '') {
+        $topWhereParts[] = "DATE(dh.ngay_tao) <= :to_date";
+    }
+    $topWhereSql = ' WHERE ' . implode(' AND ', $topWhereParts);
+
+    $stmtTopProducts = $pdo->prepare(
+        "SELECT
+            ct.ten_san_pham,
+            COALESCE(SUM(ct.so_luong), 0) AS total_qty,
+            COALESCE(SUM(ct.thanh_tien), 0) AS total_amount
+         FROM chi_tiet_don_hang ct
+         INNER JOIN don_hang dh ON dh.id = ct.don_hang_id
+         {$topWhereSql}
+         GROUP BY ct.san_pham_id, ct.ten_san_pham
+         ORDER BY total_qty DESC, total_amount DESC
+         LIMIT 8"
+    );
+    $stmtTopProducts->execute($params);
+    $topProducts = $stmtTopProducts->fetchAll();
+
+    $stmtRecent = $pdo->prepare(
+        "SELECT dh.id, dh.ma_don_hang, dh.ten_nguoi_nhan, dh.tong_thanh_toan, dh.trang_thai_don, dh.ngay_tao
+         FROM don_hang dh
+         {$whereSql}
+         ORDER BY dh.ngay_tao DESC, dh.id DESC
          LIMIT 6"
-    )->fetchAll();
+    );
+    $stmtRecent->execute($params);
+    $recentOrders = $stmtRecent->fetchAll();
 
     render('admin/dashboard', [
-        'pageTitle' => 'Admin Dashboard - 47th cafe',
+        'pageTitle' => 'Thống kê & Báo cáo - 47th cafe',
         'orderStats' => $orderStats,
         'catalogStats' => $catalogStats,
+        'avgOrderValue' => $avgOrderValue,
+        'dailyRevenue' => $dailyRevenue,
+        'topProducts' => $topProducts,
         'recentOrders' => $recentOrders,
+        'range' => $range,
+        'fromDate' => $fromDate,
+        'toDate' => $toDate,
     ]);
 }
 
