@@ -20,7 +20,7 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
     <nav class="navbar navbar-expand-lg navbar-cafe-top sticky-top py-3">
         <div class="container-fluid px-lg-5">
             <a class="navbar-brand font-serif-brand fs-2 fw-semibold lh-1" href="<?= BASE_URL ?>/">
-                47<sup class="fs-6">th</sup>cafe
+                Song Thư
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Mở thanh điều hướng">

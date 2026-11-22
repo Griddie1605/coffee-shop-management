@@ -128,9 +128,9 @@
                     <span>Tổng tạm tính:</span>
                     <strong class="price-moss ms-2"><?= format_vnd($totalAmount) ?></strong>
                 </div>
-                <button type="button" class="btn btn-moss rounded-pill px-4" disabled>
-                    Thanh toán (Module 4)
-                </button>
+                <a href="<?= BASE_URL ?>/?c=checkout&a=index" class="btn btn-moss rounded-pill px-4">
+                    Thanh toán
+                </a>
             </div>
         </div>
     </form>

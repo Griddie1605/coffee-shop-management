@@ -1,7 +1,7 @@
 <!-- 1. Hero toàn màn hình -->
 <section class="landing-hero d-flex align-items-center">
     <div class="container px-lg-5 landing-hero-content">
-        <p class="landing-kicker mb-2">Cafe &amp; Restaurant Est. 2035</p>
+        <p class="landing-kicker mb-2">Love u</p>
         <h1 class="landing-hero-title mb-4">
             Your Go-to Spot for<br>
             Delicious Eats &amp; Coffee
