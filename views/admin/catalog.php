@@ -354,6 +354,259 @@
     </div>
 </div>
 
+<hr class="my-4">
+
+<div id="options-section" class="row g-4 align-items-start">
+    <!-- QUẢN LÝ SIZE -->
+    <div class="col-lg-6">
+        <div class="card card-coffee p-4 mb-3">
+            <h2 class="h5 mb-3"><?= !empty($editSize) ? 'Sửa size sản phẩm' : 'Thêm size cho sản phẩm' ?></h2>
+            <form method="POST" action="<?= BASE_URL ?>/?c=admin&a=saveSize" class="row g-3">
+                <?php if (!empty($editSize)): ?>
+                    <input type="hidden" name="id" value="<?= (int) $editSize['id'] ?>">
+                <?php endif; ?>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Sản phẩm *</label>
+                    <select name="san_pham_id" class="form-select form-select-sm border-coffee-soft" required>
+                        <option value="">-- Chọn món --</option>
+                        <?php $curProdId = (int) ($editSize['san_pham_id'] ?? 0); ?>
+                        <?php foreach ($products as $prod): ?>
+                            <option value="<?= (int) $prod['id'] ?>" <?= $curProdId === (int) $prod['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars((string) $prod['ten_san_pham']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Tên size *</label>
+                    <input
+                        type="text"
+                        name="ten_size"
+                        class="form-control form-control-sm border-coffee-soft"
+                        placeholder="Ví dụ: S, M, L"
+                        value="<?= htmlspecialchars((string) ($editSize['ten_size'] ?? '')) ?>"
+                        required
+                    >
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Giá cộng thêm (VNĐ)</label>
+                    <input
+                        type="number"
+                        name="gia_cong_them"
+                        min="0"
+                        step="1000"
+                        class="form-control form-control-sm border-coffee-soft"
+                        value="<?= htmlspecialchars((string) ($editSize['gia_cong_them'] ?? 0)) ?>"
+                        required
+                    >
+                </div>
+
+                <div class="col-md-6 d-flex flex-column justify-content-end gap-1">
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="la_mac_dinh"
+                            id="sizeMacDinh"
+                            value="1"
+                            <?= !empty($editSize['la_mac_dinh']) ? 'checked' : '' ?>
+                        >
+                        <label class="form-check-label small" for="sizeMacDinh">Size mặc định</label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="con_ban"
+                            id="sizeConBan"
+                            value="1"
+                            <?= (!isset($editSize) || (int) ($editSize['con_ban'] ?? 1) === 1) ? 'checked' : '' ?>
+                        >
+                        <label class="form-check-label small" for="sizeConBan">Đang áp dụng</label>
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-moss rounded-pill px-4">
+                        <?= !empty($editSize) ? 'Lưu thay đổi' : 'Thêm size' ?>
+                    </button>
+                    <?php if (!empty($editSize)): ?>
+                        <a href="<?= BASE_URL ?>/?c=admin&a=catalog#options-section" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                            Hủy sửa
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </form>
+        </div>
+
+        <div class="card card-coffee p-4">
+            <h3 class="h6 mb-3">Danh sách size (<?= count($sizes ?? []) ?>)</h3>
+            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                <table class="table align-middle small mb-0">
+                    <thead>
+                        <tr class="text-coffee-muted">
+                            <th>Món</th>
+                            <th>Size</th>
+                            <th class="text-end">+ Giá</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($sizes)): ?>
+                            <tr>
+                                <td colspan="5" class="text-center text-coffee-muted py-3">Chưa có size nào.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($sizes as $s): ?>
+                                <?php $on = (int) ($s['con_ban'] ?? 1) === 1; ?>
+                                <tr>
+                                    <td><?= htmlspecialchars((string) $s['ten_san_pham']) ?></td>
+                                    <td>
+                                        <span class="fw-semibold"><?= htmlspecialchars((string) $s['ten_size']) ?></span>
+                                        <?php if (!empty($s['la_mac_dinh'])): ?>
+                                            <span class="badge bg-light text-dark border ms-1">Mặc định</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-end">+<?= format_vnd((float) $s['gia_cong_them']) ?></td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill <?= $on ? 'bg-success' : 'bg-secondary' ?>">
+                                            <?= $on ? 'Đang bán' : 'Tắt' ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="<?= BASE_URL ?>/?c=admin&a=catalog&edit_size=<?= (int) $s['id'] ?>#options-section" class="btn btn-sm btn-outline-dark rounded-pill px-2">
+                                            Sửa
+                                        </a>
+                                        <form method="POST" action="<?= BASE_URL ?>/?c=admin&a=toggleSize" class="d-inline">
+                                            <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-2">
+                                                <?= $on ? 'Tắt' : 'Bật' ?>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUẢN LÝ TOPPING -->
+    <div class="col-lg-6">
+        <div class="card card-coffee p-4 mb-3">
+            <h2 class="h5 mb-3"><?= !empty($editTopping) ? 'Sửa topping' : 'Thêm topping mới' ?></h2>
+            <form method="POST" action="<?= BASE_URL ?>/?c=admin&a=saveTopping" class="row g-3">
+                <?php if (!empty($editTopping)): ?>
+                    <input type="hidden" name="id" value="<?= (int) $editTopping['id'] ?>">
+                <?php endif; ?>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Tên topping *</label>
+                    <input
+                        type="text"
+                        name="ten_topping"
+                        class="form-control form-control-sm border-coffee-soft"
+                        placeholder="Ví dụ: Trân châu trắng, Kem cheese"
+                        value="<?= htmlspecialchars((string) ($editTopping['ten_topping'] ?? '')) ?>"
+                        required
+                    >
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Giá bán (VNĐ) *</label>
+                    <input
+                        type="number"
+                        name="gia_ban"
+                        min="0"
+                        step="1000"
+                        class="form-control form-control-sm border-coffee-soft"
+                        value="<?= htmlspecialchars((string) ($editTopping['gia_ban'] ?? 0)) ?>"
+                        required
+                    >
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="con_ban"
+                            id="toppingConBan"
+                            value="1"
+                            <?= (!isset($editTopping) || (int) ($editTopping['con_ban'] ?? 1) === 1) ? 'checked' : '' ?>
+                        >
+                        <label class="form-check-label small" for="toppingConBan">Đang bán</label>
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-moss rounded-pill px-4">
+                        <?= !empty($editTopping) ? 'Lưu thay đổi' : 'Thêm topping' ?>
+                    </button>
+                    <?php if (!empty($editTopping)): ?>
+                        <a href="<?= BASE_URL ?>/?c=admin&a=catalog#options-section" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                            Hủy sửa
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </form>
+        </div>
+
+        <div class="card card-coffee p-4">
+            <h3 class="h6 mb-3">Danh sách topping (<?= count($toppings ?? []) ?>)</h3>
+            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                <table class="table align-middle small mb-0">
+                    <thead>
+                        <tr class="text-coffee-muted">
+                            <th>Tên topping</th>
+                            <th class="text-end">Giá bán</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($toppings)): ?>
+                            <tr>
+                                <td colspan="4" class="text-center text-coffee-muted py-3">Chưa có topping nào.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($toppings as $t): ?>
+                                <?php $on = (int) ($t['con_ban'] ?? 1) === 1; ?>
+                                <tr>
+                                    <td class="fw-semibold"><?= htmlspecialchars((string) $t['ten_topping']) ?></td>
+                                    <td class="text-end"><?= format_vnd((float) $t['gia_ban']) ?></td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill <?= $on ? 'bg-success' : 'bg-secondary' ?>">
+                                            <?= $on ? 'Đang bán' : 'Tắt' ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="<?= BASE_URL ?>/?c=admin&a=catalog&edit_topping=<?= (int) $t['id'] ?>#options-section" class="btn btn-sm btn-outline-dark rounded-pill px-2">
+                                            Sửa
+                                        </a>
+                                        <form method="POST" action="<?= BASE_URL ?>/?c=admin&a=toggleTopping" class="d-inline">
+                                            <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-2">
+                                                <?= $on ? 'Tắt' : 'Bật' ?>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const selectFilter = document.getElementById('filterProductCategory');
