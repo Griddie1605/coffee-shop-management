@@ -21,12 +21,15 @@ function homeMenu(): void
 
     $categories = getAllCategories();
     $products = getFilteredProducts($categoryId, $keyword);
+    $toppings = getActiveToppings();
 
     render('home/menu', [
         'pageTitle' => 'Thực đơn - Quán Cà Phê',
         'categories' => $categories,
         'products' => $products,
+        'toppings' => $toppings,
         'selectedCategory' => $categoryId,
         'keyword' => $keyword,
     ]);
 }
+

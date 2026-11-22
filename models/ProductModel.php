@@ -60,3 +60,31 @@ function getFilteredProducts(?int $categoryId, string $keyword = ''): array
 
     return $stmt->fetchAll();
 }
+
+function getProductSizes(int $productId): array
+{
+    $pdo = db_connect();
+    // Ưu tiên size mặc định trước, sau đó theo id
+    $stmt = $pdo->prepare(
+        "SELECT id, san_pham_id, ten_size, gia_cong_them, la_mac_dinh
+         FROM bien_the_san_pham
+         WHERE san_pham_id = :product_id AND con_ban = 1
+         ORDER BY la_mac_dinh DESC, id ASC"
+    );
+    $stmt->execute([':product_id' => $productId]);
+
+    return $stmt->fetchAll();
+}
+
+function getActiveToppings(): array
+{
+    $pdo = db_connect();
+    $stmt = $pdo->query(
+        "SELECT id, ten_topping, gia_ban
+         FROM topping
+         WHERE con_ban = 1
+         ORDER BY id ASC"
+    );
+
+    return $stmt->fetchAll();
+}
