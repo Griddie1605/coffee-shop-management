@@ -120,11 +120,9 @@ coffee_mvc/
 Module 2: Giao diện trang chủ & Danh mục thực đơn (Storefront & Menu)
 Module 3: Tùy biến đồ uống, Giỏ hàng & Khuyến mãi (Customization, Cart & Voucher)
 Module 4: Đặt hàng & Theo dõi trạng thái đơn (Checkout & Order Tracking)
-Module 5: Đăng ký & Đăng nhập tài khoản
-Module 6: Quản lý thực đơn, Size & Topping (Product & Option Management)
-Module 7: Quản lý kho nguyên liệu & Định lượng pha chế (Inventory & Recipe/BOM)
-Module 8: Xử lý đơn hàng & Tự động trừ kho (Order Fulfillment & Stock Deduction)
-Module 9: Thống kê doanh thu, Chi phí nhập & Báo cáo (Dashboard & Analytics)
+Module 5: Đăng ký & Đăng nhập tài khoản & Quản lý khách hàng
+Module 6: Quản lý danh mục, Sản phẩm & Tùy chọn
+Module 7: Thống kê doanh thu & Báo cáo
 
 ## Trước khi bắt đầu code trên máy hiện tại: luôn kéo bản ## mới nhất từ GitHub về trước:
 

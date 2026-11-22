@@ -97,3 +97,367 @@ function adminUpdateStatus(): void
     header('Location: ' . BASE_URL . '/?c=admin&a=index' . ($redirectStatus !== 'all' ? '&status=' . urlencode($redirectStatus) : ''));
     exit;
 }
+
+function adminMakeSlug(string $text): string
+{
+    $map = [
+        'à'=>'a','á'=>'a','ạ'=>'a','ả'=>'a','ã'=>'a','â'=>'a','ầ'=>'a','ấ'=>'a','ậ'=>'a','ẩ'=>'a','ẫ'=>'a','ă'=>'a','ằ'=>'a','ắ'=>'a','ặ'=>'a','ẳ'=>'a','ẵ'=>'a',
+        'è'=>'e','é'=>'e','ẹ'=>'e','ẻ'=>'e','ẽ'=>'e','ê'=>'e','ề'=>'e','ế'=>'e','ệ'=>'e','ể'=>'e','ễ'=>'e',
+        'ì'=>'i','í'=>'i','ị'=>'i','ỉ'=>'i','ĩ'=>'i',
+        'ò'=>'o','ó'=>'o','ọ'=>'o','ỏ'=>'o','õ'=>'o','ô'=>'o','ồ'=>'o','ố'=>'o','ộ'=>'o','ổ'=>'o','ỗ'=>'o','ơ'=>'o','ờ'=>'o','ớ'=>'o','ợ'=>'o','ở'=>'o','ỡ'=>'o',
+        'ù'=>'u','ú'=>'u','ụ'=>'u','ủ'=>'u','ũ'=>'u','ư'=>'u','ừ'=>'u','ứ'=>'u','ự'=>'u','ử'=>'u','ữ'=>'u',
+        'ỳ'=>'y','ý'=>'y','ỵ'=>'y','ỷ'=>'y','ỹ'=>'y',
+        'đ'=>'d',
+    ];
+    $lower = mb_strtolower(trim($text), 'UTF-8');
+    $converted = strtr($lower, $map);
+    $slug = preg_replace('/[^a-z0-9]+/', '-', $converted) ?? '';
+    $slug = trim($slug, '-');
+    return $slug !== '' ? $slug : 'item';
+}
+
+function adminUniqueSlug(PDO $pdo, string $table, string $baseName, ?int $ignoreId = null): string
+{
+    $baseSlug = adminMakeSlug($baseName);
+    $slug = $baseSlug;
+    $suffix = 2;
+
+    while (true) {
+        $sql = "SELECT id FROM {$table} WHERE duong_dan = :slug";
+        $params = [':slug' => $slug];
+        if ($ignoreId !== null && $ignoreId > 0) {
+            $sql .= " AND id != :id";
+            $params[':id'] = $ignoreId;
+        }
+        $sql .= " LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        if (!$stmt->fetch()) {
+            return $slug;
+        }
+        $slug = $baseSlug . '-' . $suffix;
+        $suffix++;
+    }
+}
+
+function adminCatalog(): void
+{
+    adminRequireStaff();
+
+    $pdo = db_connect();
+    $categories = $pdo->query(
+        "SELECT id, ten_danh_muc, duong_dan, loai_mon, thu_tu_hien_thi, con_ban
+         FROM danh_muc
+         ORDER BY thu_tu_hien_thi ASC, id ASC"
+    )->fetchAll();
+
+    $products = $pdo->query(
+        "SELECT sp.id, sp.danh_muc_id, sp.ten_san_pham, sp.duong_dan, sp.mo_ta,
+                sp.hinh_anh, sp.gia_goc, sp.con_ban, sp.ngay_tao,
+                dm.ten_danh_muc, dm.loai_mon
+         FROM san_pham sp
+         INNER JOIN danh_muc dm ON dm.id = sp.danh_muc_id
+         ORDER BY sp.id DESC"
+    )->fetchAll();
+
+    $editCategory = null;
+    if (!empty($_GET['edit_cat'])) {
+        $catId = (int) $_GET['edit_cat'];
+        foreach ($categories as $c) {
+            if ((int) $c['id'] === $catId) {
+                $editCategory = $c;
+                break;
+            }
+        }
+    }
+
+    $editProduct = null;
+    if (!empty($_GET['edit_prod'])) {
+        $prodId = (int) $_GET['edit_prod'];
+        foreach ($products as $p) {
+            if ((int) $p['id'] === $prodId) {
+                $editProduct = $p;
+                break;
+            }
+        }
+    }
+
+    render('admin/catalog', [
+        'pageTitle' => 'Quản lý danh mục & sản phẩm - 47th cafe',
+        'categories' => $categories,
+        'products' => $products,
+        'editCategory' => $editCategory,
+        'editProduct' => $editProduct,
+        'flashSuccess' => $_SESSION['admin_success'] ?? '',
+        'flashError' => $_SESSION['admin_error'] ?? '',
+    ]);
+    unset($_SESSION['admin_success'], $_SESSION['admin_error']);
+}
+
+function adminSaveCategory(): void
+{
+    adminRequireStaff();
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+        exit;
+    }
+
+    $id = (int) ($_POST['id'] ?? 0);
+    $ten = trim((string) ($_POST['ten_danh_muc'] ?? ''));
+    $loaiMon = (string) ($_POST['loai_mon'] ?? 'do_uong');
+    $thuTu = (int) ($_POST['thu_tu_hien_thi'] ?? 0);
+    $conBan = isset($_POST['con_ban']) ? 1 : 0;
+
+    if ($ten === '' || !in_array($loaiMon, ['do_uong', 'banh'], true)) {
+        $_SESSION['admin_error'] = 'Tên danh mục hoặc loại món không hợp lệ.';
+        header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+        exit;
+    }
+
+    $pdo = db_connect();
+    $slug = adminUniqueSlug($pdo, 'danh_muc', $ten, $id > 0 ? $id : null);
+
+    if ($id > 0) {
+        $stmt = $pdo->prepare(
+            "UPDATE danh_muc
+             SET ten_danh_muc = :ten, duong_dan = :slug, loai_mon = :loai,
+                 thu_tu_hien_thi = :thu_tu, con_ban = :con_ban
+             WHERE id = :id"
+        );
+        $stmt->execute([
+            ':ten' => $ten,
+            ':slug' => $slug,
+            ':loai' => $loaiMon,
+            ':thu_tu' => $thuTu,
+            ':con_ban' => $conBan,
+            ':id' => $id,
+        ]);
+        $_SESSION['admin_success'] = 'Đã cập nhật danh mục.';
+    } else {
+        $stmt = $pdo->prepare(
+            "INSERT INTO danh_muc (ten_danh_muc, duong_dan, loai_mon, thu_tu_hien_thi, con_ban)
+             VALUES (:ten, :slug, :loai, :thu_tu, :con_ban)"
+        );
+        $stmt->execute([
+            ':ten' => $ten,
+            ':slug' => $slug,
+            ':loai' => $loaiMon,
+            ':thu_tu' => $thuTu,
+            ':con_ban' => $conBan,
+        ]);
+        $_SESSION['admin_success'] = 'Đã thêm danh mục mới.';
+    }
+
+    header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+    exit;
+}
+
+function adminSaveProduct(): void
+{
+    adminRequireStaff();
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+        exit;
+    }
+
+    $id = (int) ($_POST['id'] ?? 0);
+    $danhMucId = (int) ($_POST['danh_muc_id'] ?? 0);
+    $ten = trim((string) ($_POST['ten_san_pham'] ?? ''));
+    $giaGoc = (float) ($_POST['gia_goc'] ?? 0);
+    $moTa = trim((string) ($_POST['mo_ta'] ?? ''));
+    $existingImage = trim((string) ($_POST['hinh_anh_hien_tai'] ?? ''));
+    $conBan = isset($_POST['con_ban']) ? 1 : 0;
+
+    if ($ten === '' || $danhMucId <= 0 || $giaGoc < 0) {
+        $_SESSION['admin_error'] = 'Vui lòng nhập tên sản phẩm, chọn danh mục và giá hợp lệ.';
+        header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+        exit;
+    }
+
+    $pdo = db_connect();
+    $checkCat = $pdo->prepare("SELECT id FROM danh_muc WHERE id = :id LIMIT 1");
+    $checkCat->execute([':id' => $danhMucId]);
+    if (!$checkCat->fetch()) {
+        $_SESSION['admin_error'] = 'Danh mục đã chọn không tồn tại.';
+        header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+        exit;
+    }
+
+    $uploadResult = adminUploadProductImage($_FILES['hinh_anh_file'] ?? null);
+    if (!$uploadResult['ok']) {
+        $_SESSION['admin_error'] = (string) ($uploadResult['error'] ?? 'Lỗi tải ảnh.');
+        header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+        exit;
+    }
+
+    $hinhAnh = $uploadResult['path'] ?? ($existingImage !== '' ? $existingImage : null);
+    $slug = adminUniqueSlug($pdo, 'san_pham', $ten, $id > 0 ? $id : null);
+
+    if ($id > 0) {
+        $stmt = $pdo->prepare(
+            "UPDATE san_pham
+             SET danh_muc_id = :dm_id, ten_san_pham = :ten, duong_dan = :slug,
+                 mo_ta = :mo_ta, hinh_anh = :hinh_anh, gia_goc = :gia_goc, con_ban = :con_ban
+             WHERE id = :id"
+        );
+        $stmt->execute([
+            ':dm_id' => $danhMucId,
+            ':ten' => $ten,
+            ':slug' => $slug,
+            ':mo_ta' => $moTa !== '' ? $moTa : null,
+            ':hinh_anh' => $hinhAnh,
+            ':gia_goc' => $giaGoc,
+            ':con_ban' => $conBan,
+            ':id' => $id,
+        ]);
+        $_SESSION['admin_success'] = 'Đã cập nhật sản phẩm.';
+    } else {
+        $stmt = $pdo->prepare(
+            "INSERT INTO san_pham (danh_muc_id, ten_san_pham, duong_dan, mo_ta, hinh_anh, gia_goc, con_ban)
+             VALUES (:dm_id, :ten, :slug, :mo_ta, :hinh_anh, :gia_goc, :con_ban)"
+        );
+        $stmt->execute([
+            ':dm_id' => $danhMucId,
+            ':ten' => $ten,
+            ':slug' => $slug,
+            ':mo_ta' => $moTa !== '' ? $moTa : null,
+            ':hinh_anh' => $hinhAnh,
+            ':gia_goc' => $giaGoc,
+            ':con_ban' => $conBan,
+        ]);
+        $_SESSION['admin_success'] = 'Đã thêm sản phẩm mới.';
+    }
+
+    header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+    exit;
+}
+
+function adminToggleProduct(): void
+{
+    adminRequireStaff();
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+        exit;
+    }
+
+    $id = (int) ($_POST['id'] ?? 0);
+    if ($id > 0) {
+        $pdo = db_connect();
+        $stmt = $pdo->prepare("UPDATE san_pham SET con_ban = IF(con_ban = 1, 0, 1) WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $_SESSION['admin_success'] = 'Đã đổi trạng thái bán của sản phẩm.';
+    }
+
+    header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+    exit;
+}
+
+function adminDashboard(): void
+{
+    adminRequireStaff();
+
+    $pdo = db_connect();
+
+    $orderStats = $pdo->query(
+        "SELECT
+            COUNT(*) AS total_orders,
+            SUM(CASE WHEN trang_thai_don = 'cho_xac_nhan' THEN 1 ELSE 0 END) AS pending_orders,
+            SUM(CASE WHEN trang_thai_don = 'dang_pha_che' THEN 1 ELSE 0 END) AS brewing_orders,
+            SUM(CASE WHEN trang_thai_don = 'hoan_thanh' THEN tong_thanh_toan ELSE 0 END) AS completed_revenue
+         FROM don_hang"
+    )->fetch() ?: [];
+
+    $catalogStats = $pdo->query(
+        "SELECT
+            (SELECT COUNT(*) FROM danh_muc WHERE con_ban = 1) AS active_categories,
+            (SELECT COUNT(*) FROM san_pham WHERE con_ban = 1) AS active_products,
+            (SELECT COUNT(*) FROM san_pham) AS total_products"
+    )->fetch() ?: [];
+
+    $recentOrders = $pdo->query(
+        "SELECT id, ma_don_hang, ten_nguoi_nhan, tong_thanh_toan, trang_thai_don, ngay_tao
+         FROM don_hang
+         ORDER BY ngay_tao DESC, id DESC
+         LIMIT 6"
+    )->fetchAll();
+
+    render('admin/dashboard', [
+        'pageTitle' => 'Admin Dashboard - 47th cafe',
+        'orderStats' => $orderStats,
+        'catalogStats' => $catalogStats,
+        'recentOrders' => $recentOrders,
+    ]);
+}
+
+function adminUploadProductImage(?array $file): array
+{
+    if (empty($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return ['ok' => true, 'path' => null];
+    }
+
+    if ((int) ($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'error' => 'Tải ảnh lên thất bại (mã lỗi ' . (int) $file['error'] . ').'];
+    }
+
+    $maxBytes = 3 * 1024 * 1024; // 3MB
+    if ((int) ($file['size'] ?? 0) <= 0 || (int) $file['size'] > $maxBytes) {
+        return ['ok' => false, 'error' => 'Kích thước ảnh phải nhỏ hơn hoặc bằng 3MB.'];
+    }
+
+    $tmpPath = (string) ($file['tmp_name'] ?? '');
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->file($tmpPath) ?: '';
+
+    $allowedMimes = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/webp' => 'webp',
+        'image/gif'  => 'gif',
+    ];
+
+    if (!isset($allowedMimes[$mime])) {
+        return ['ok' => false, 'error' => 'Chỉ hỗ trợ file ảnh JPG, PNG, WEBP hoặc GIF.'];
+    }
+
+    $ext = $allowedMimes[$mime];
+    $uploadDir = __DIR__ . '/../assets/images/products';
+    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+        return ['ok' => false, 'error' => 'Không thể tạo thư mục lưu ảnh sản phẩm.'];
+    }
+
+    try {
+        $randomHex = bin2hex(random_bytes(6));
+    } catch (Throwable $e) {
+        $randomHex = uniqid('', true);
+    }
+
+    $fileName = 'prod_' . date('Ymd_His') . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $randomHex) . '.' . $ext;
+    $destPath = $uploadDir . '/' . $fileName;
+
+    if (!move_uploaded_file($tmpPath, $destPath)) {
+        return ['ok' => false, 'error' => 'Không thể lưu file ảnh vào thư mục dự án.'];
+    }
+
+    return ['ok' => true, 'path' => 'assets/images/products/' . $fileName];
+}
+
+function adminToggleCategory(): void
+{
+    adminRequireStaff();
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+        exit;
+    }
+
+    $id = (int) ($_POST['id'] ?? 0);
+    if ($id > 0) {
+        $pdo = db_connect();
+        $stmt = $pdo->prepare("UPDATE danh_muc SET con_ban = IF(con_ban = 1, 0, 1) WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $_SESSION['admin_success'] = 'Đã đổi trạng thái bán của danh mục.';
+    }
+
+    header('Location: ' . BASE_URL . '/?c=admin&a=catalog');
+    exit;
+}

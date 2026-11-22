@@ -22,10 +22,10 @@ function getAllCategories(): array
 {
     $pdo = db_connect();
 
-    $sql = "SELECT id, ten_danh_muc, loai_mon
+    $sql = "SELECT id, ten_danh_muc, loai_mon, thu_tu_hien_thi
             FROM danh_muc
             WHERE con_ban = 1
-            ORDER BY id ASC";
+            ORDER BY thu_tu_hien_thi ASC, id ASC";
 
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll();
@@ -37,8 +37,9 @@ function getFilteredProducts(?int $categoryId, string $keyword = ''): array
 
     $sql = "SELECT p.*, d.ten_danh_muc
             FROM san_pham p
-            LEFT JOIN danh_muc d ON p.danh_muc_id = d.id
-            WHERE p.con_ban = 1";
+            INNER JOIN danh_muc d ON p.danh_muc_id = d.id
+            WHERE p.con_ban = 1
+              AND d.con_ban = 1";
     $params = [];
 
     if ($categoryId !== null && $categoryId > 0) {

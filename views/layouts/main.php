@@ -52,9 +52,9 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
                                 <a class="dropdown-item" href="<?= BASE_URL ?>/?c=order&a=index">Đơn hàng của tôi</a>
                             </li>
                             <?php if (in_array((string) ($_SESSION['user']['vai_tro'] ?? ''), ['quan_tri', 'nhan_vien'], true)): ?>
-                            <li>
-                                <a class="dropdown-item" href="<?= BASE_URL ?>/?c=admin&a=index">Quản trị đơn hàng</a>
-                            </li>
+                                <li>
+                                    <a class="dropdown-item" href="<?= BASE_URL ?>/?c=admin&a=dashboard">Admin Dashboard</a>
+                                </li>
                             <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
                             <li>
@@ -81,6 +81,13 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
     <?php if ($isHomePage): ?>
         <main>
             <?= $content ?>
+        </main>
+    <?php elseif ($currentC === 'admin'): ?>
+        <main class="admin-shell d-flex flex-column flex-lg-row">
+            <?php require __DIR__ . '/../admin/_sidebar.php'; ?>
+            <div class="admin-content flex-grow-1 p-4 p-lg-5">
+                <?= $content ?>
+            </div>
         </main>
     <?php else: ?>
         <main class="container py-4 pb-5">
