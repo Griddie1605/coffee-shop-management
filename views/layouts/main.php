@@ -41,12 +41,30 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
                     <li class="nav-item">
                         <a class="nav-link" href="<?= BASE_URL ?>/#contact-section">Contact Us</a>
                     </li>
+                    <?php if (!empty($_SESSION['user'])): ?>
+                    <li class="nav-item dropdown ms-lg-2">
+                        <a class="nav-link dropdown-toggle d-inline-flex align-items-center gap-1" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="login-dot"></span>
+                            <span><?= htmlspecialchars((string) ($_SESSION['user']['ho_ten'] ?? 'Tài khoản')) ?></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end border-coffee-soft">
+                            <li>
+                                <a class="dropdown-item" href="<?= BASE_URL ?>/?c=order&a=index">Đơn hàng của tôi</a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="<?= BASE_URL ?>/?c=auth&a=logout">Đăng xuất</a>
+                            </li>
+                        </ul>
+                    </li>
+                <?php else: ?>
                     <li class="nav-item ms-lg-2">
                         <a class="nav-link d-inline-flex align-items-center gap-1" href="<?= BASE_URL ?>/?c=auth&a=login">
                             <span class="login-dot"></span>
                             <span>Log In</span>
                         </a>
                     </li>
+                <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link" href="<?= BASE_URL ?>/?c=cart&a=index">Cart (<?= $cartCount ?>)</a>
                     </li>
