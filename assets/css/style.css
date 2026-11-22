@@ -1,3 +1,6 @@
+/* ==============================
+   1. BIẾN MÀU & NỀN CHUNG
+============================== */
 :root {
   --bg-cream: #f6f1e7;
   --bg-card: #fffdf9;
@@ -29,7 +32,9 @@ h3,
   font-family: "Fraunces", serif;
 }
 
-/* Navbar */
+/* ==============================
+   2. NAVBAR & HERO TRANG CHỦ
+============================== */
 .navbar-cafe-top {
   background-color: var(--bg-peach-nav);
   border-bottom: 1px solid rgba(46, 74, 62, 0.08);
@@ -113,7 +118,9 @@ h3,
   border-color: #ffffff;
 }
 
-/* Các khối Eat / Drink / Enjoy */
+/* ==============================
+   3. CÁC KHỐI NỘI DUNG TRANG CHỦ
+============================== */
 .split-band {
   background-color: #ffffff;
 }
@@ -175,8 +182,7 @@ h3,
   display: block;
 }
 
-/* Thu gọn khối Eat và Drink, giữ nguyên size của khối Enjoy */
-/* Khối Eat và Drink theo kích thước chỉ định */
+/* Kích thước cân đối cho khối Eat/Drink trong trang chủ. */
 .split-band--compact .split-text-col,
 .split-band--compact .split-media-col {
   min-height: 590px;
@@ -208,7 +214,9 @@ h3,
   margin-bottom: 1.4rem !important;
 }
 
-/* Địa chỉ & Giờ mở cửa */
+/* ==============================
+   4. ĐỊA CHỈ & DẢI ẢNH
+============================== */
 .visit-band {
   background-color: var(--bg-visit-cream);
 }
@@ -273,7 +281,9 @@ h3,
   background-color: var(--bg-cream);
 }
 
-/* Footer xanh rêu */
+/* ==============================
+   5. FOOTER
+============================== */
 .footer-moss-main {
   background-color: var(--footer-moss);
   color: #ffffff;
@@ -400,7 +410,9 @@ h3,
   color: var(--bg-peach-nav);
 }
 
-/* Style trang thực đơn & thẻ món */
+/* ==============================
+   6. THỰC ĐƠN, GIỎ HÀNG & CHUNG
+============================== */
 .text-coffee-muted {
   color: var(--ink-muted);
 }
@@ -446,32 +458,13 @@ h3,
   font-weight: 700;
 }
 
+/* ==============================
+   7. LAYOUT QUẢN TRỊ & CATALOG
+============================== */
 @media (min-width: 992px) {
   .admin-sidebar-sticky {
     position: sticky;
     top: 92px;
-  }
-}
-
-.admin-shell {
-  min-height: calc(100vh - 76px);
-}
-
-.admin-sidebar {
-  width: 100%;
-  flex-shrink: 0;
-  background-color: #f7f3eb;
-  border-color: rgba(45, 36, 28, 0.12) !important;
-}
-
-@media (min-width: 992px) {
-  .admin-sidebar {
-    width: 250px;
-  }
-
-  .admin-sidebar-inner {
-    position: sticky;
-    top: 76px;
   }
 }
 

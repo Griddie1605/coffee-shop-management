@@ -1,7 +1,10 @@
 <?php
 
-require_once __DIR__ . '/../models/ProductModel.php';
+require_once __DIR__ . '/../models/OrderModel.php';
 
+/**
+ * Tính tạm tính, giảm giá hợp lệ và tổng thanh toán cuối cùng trước khi tạo đơn.
+ */
 function checkoutCalculateSummary(array $cartItems): array
 {
     $subtotal = 0.0;
@@ -16,6 +19,7 @@ function checkoutCalculateSummary(array $cartItems): array
     if ($voucher !== null && $subtotal > 0) {
         $expired = !empty($voucher['ngay_het_han']) && strtotime((string) $voucher['ngay_het_han']) < time();
         $minOrder = (float) ($voucher['don_toi_thieu'] ?? 0);
+
         if (!$expired && $subtotal >= $minOrder) {
             $voucherId = (int) ($voucher['id'] ?? 0) ?: null;
             if (($voucher['kieu_giam'] ?? 'so_tien') === 'phan_tram') {
@@ -30,17 +34,18 @@ function checkoutCalculateSummary(array $cartItems): array
         }
     }
 
-    $finalTotal = max(0.0, $subtotal - $discount);
-
     return [
         'subtotal' => $subtotal,
         'discount' => $discount,
-        'finalTotal' => $finalTotal,
+        'finalTotal' => max(0.0, $subtotal - $discount),
         'voucher' => $voucher,
         'voucherId' => $voucherId,
     ];
 }
 
+/**
+ * Hiển thị trang xác nhận thông tin giao nhận và tóm tắt đơn hàng.
+ */
 function checkoutIndex(): void
 {
     $cartItems = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
@@ -51,7 +56,6 @@ function checkoutIndex(): void
     }
 
     $summary = checkoutCalculateSummary($cartItems);
-    $userId = $_SESSION['user']['id'] ?? null;
 
     render('checkout/index', [
         'pageTitle' => 'Thanh toán - 47th cafe',
@@ -69,11 +73,14 @@ function checkoutIndex(): void
             'ghi_chu' => '',
         ],
         'errorMessage' => $_SESSION['checkout_error'] ?? '',
-        'userId' => $userId,
+        'userId' => $_SESSION['user']['id'] ?? null,
     ]);
     unset($_SESSION['checkout_error']);
 }
 
+/**
+ * Kiểm tra dữ liệu người nhận và gọi OrderModel lưu đơn hàng bằng transaction.
+ */
 function checkoutPlaceOrder(): void
 {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -115,86 +122,21 @@ function checkoutPlaceOrder(): void
     }
 
     $summary = checkoutCalculateSummary($cartItems);
-    $nguoiDungId = isset($_SESSION['user']['id']) ? (int) $_SESSION['user']['id'] : null;
-    $maDonHang = 'DH' . date('ymdHis') . random_int(10, 99);
-
-    $pdo = db_connect();
 
     try {
-        $pdo->beginTransaction();
-
-        $stmtOrder = $pdo->prepare(
-            "INSERT INTO don_hang (
-                ma_don_hang, nguoi_dung_id, ma_giam_gia_id,
-                ten_nguoi_nhan, sdt_nguoi_nhan, hinh_thuc_nhan, dia_chi_giao,
-                phuong_thuc_thanh_toan, tam_tinh, tien_giam, tong_thanh_toan,
-                trang_thai_don, da_tru_kho, ghi_chu
-            ) VALUES (
-                :ma_don_hang, :nguoi_dung_id, :ma_giam_gia_id,
-                :ten_nguoi_nhan, :sdt_nguoi_nhan, :hinh_thuc_nhan, :dia_chi_giao,
-                :phuong_thuc_thanh_toan, :tam_tinh, :tien_giam, :tong_thanh_toan,
-                'cho_xac_nhan', 0, :ghi_chu
-            )"
-        );
-
-        $stmtOrder->execute([
-            ':ma_don_hang' => $maDonHang,
-            ':nguoi_dung_id' => $nguoiDungId,
-            ':ma_giam_gia_id' => $summary['voucherId'],
-            ':ten_nguoi_nhan' => $tenNguoiNhan,
-            ':sdt_nguoi_nhan' => $sdtNguoiNhan,
-            ':hinh_thuc_nhan' => $hinhThucNhan,
-            ':dia_chi_giao' => $hinhThucNhan === 'giao_tan_noi' ? $diaChiGiao : null,
-            ':phuong_thuc_thanh_toan' => $phuongThucTT,
-            ':tam_tinh' => $summary['subtotal'],
-            ':tien_giam' => $summary['discount'],
-            ':tong_thanh_toan' => $summary['finalTotal'],
-            ':ghi_chu' => $ghiChu !== '' ? $ghiChu : null,
-        ]);
-
-        $donHangId = (int) $pdo->lastInsertId();
-
-        $stmtDetail = $pdo->prepare(
-            "INSERT INTO chi_tiet_don_hang (
-                don_hang_id, san_pham_id, bien_the_id,
-                ten_san_pham, ten_size, don_gia, so_luong, thanh_tien
-            ) VALUES (
-                :don_hang_id, :san_pham_id, :bien_the_id,
-                :ten_san_pham, :ten_size, :don_gia, :so_luong, :thanh_tien
-            )"
-        );
-
-        foreach ($cartItems as $item) {
-            $productId = (int) ($item['product_id'] ?? 0);
-            $sizeId = (int) ($item['size_id'] ?? 0);
-            $unitPrice = (float) ($item['price'] ?? 0);
-            $qty = max(1, (int) ($item['qty'] ?? 1));
-            $lineTotal = round($unitPrice * $qty, 2);
-
-            $rawName = (string) ($item['name'] ?? 'Món');
-            $tenSize = null;
-            if (preg_match('/\(Size\s+([^)]+)\)/u', $rawName, $mSize)) {
-                $tenSize = mb_substr(trim($mSize[1]), 0, 30);
-            }
-
-            // Gộp ghi chú món vào tên món lưu trong chi tiết đơn vì bảng chưa có cột ghi chú riêng
-            $itemNote = trim((string) ($item['note'] ?? ''));
-            $fullItemName = $itemNote !== '' ? ($rawName . ' [Ghi chú: ' . $itemNote . ']') : $rawName;
-            $fullItemName = mb_substr($fullItemName, 0, 150);
-
-            $stmtDetail->execute([
-                ':don_hang_id' => $donHangId,
-                ':san_pham_id' => $productId,
-                ':bien_the_id' => $sizeId > 0 ? $sizeId : null,
-                ':ten_san_pham' => $fullItemName,
-                ':ten_size' => $tenSize,
-                ':don_gia' => $unitPrice,
-                ':so_luong' => $qty,
-                ':thanh_tien' => $lineTotal,
-            ]);
-        }
-
-        $pdo->commit();
+        $maDonHang = createOrderWithItems([
+            'nguoi_dung_id' => isset($_SESSION['user']['id']) ? (int) $_SESSION['user']['id'] : null,
+            'ma_giam_gia_id' => $summary['voucherId'],
+            'ten_nguoi_nhan' => $tenNguoiNhan,
+            'sdt_nguoi_nhan' => $sdtNguoiNhan,
+            'hinh_thuc_nhan' => $hinhThucNhan,
+            'dia_chi_giao' => $hinhThucNhan === 'giao_tan_noi' ? $diaChiGiao : null,
+            'phuong_thuc_thanh_toan' => $phuongThucTT,
+            'tam_tinh' => $summary['subtotal'],
+            'tien_giam' => $summary['discount'],
+            'tong_thanh_toan' => $summary['finalTotal'],
+            'ghi_chu' => $ghiChu !== '' ? $ghiChu : null,
+        ], $cartItems);
 
         unset($_SESSION['cart'], $_SESSION['voucher']);
         $_SESSION['last_order_code'] = $maDonHang;
@@ -202,15 +144,15 @@ function checkoutPlaceOrder(): void
         header('Location: ' . BASE_URL . '/?c=checkout&a=success');
         exit;
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
         $_SESSION['checkout_error'] = 'Không thể lưu đơn hàng lúc này. Vui lòng thử lại.';
         header('Location: ' . BASE_URL . '/?c=checkout&a=index');
         exit;
     }
 }
 
+/**
+ * Trang thông báo đặt hàng thành công kèm mã đơn vừa tạo.
+ */
 function checkoutSuccess(): void
 {
     $orderCode = (string) ($_SESSION['last_order_code'] ?? '');

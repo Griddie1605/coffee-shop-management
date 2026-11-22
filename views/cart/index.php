@@ -41,6 +41,7 @@
                 <tbody>
                     <?php foreach ($cartItems as $key => $item): ?>
                         <?php
+                        // Giỏ hàng hiển thị giá đã được tính ở server; JS chỉ hỗ trợ xem trước, không thay dữ liệu giá lưu trong session.
                         $price = (float) ($item['price'] ?? 0);
                         $qty = (int) ($item['qty'] ?? 1);
                         $lineTotal = $price * $qty;

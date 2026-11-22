@@ -1,3 +1,6 @@
+<?php
+/* Quản lý đồng bộ danh mục, sản phẩm, size và topping trên một màn hình catalog. */
+?>
 <div class="mb-4">
     <h1 class="h2 mb-1">Quản lý danh mục & sản phẩm</h1>
     <p class="mb-0 text-coffee-muted">Thêm, sửa thông tin món, giá gốc và trạng thái bán trên thực đơn</p>
@@ -46,7 +49,6 @@
                             value="<?= htmlspecialchars((string) ($editProduct['ten_san_pham'] ?? '')) ?>"
                         >
                     </div>
-
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Danh mục *</label>
                         <select name="danh_muc_id" required class="form-select border-coffee-soft">
@@ -60,7 +62,6 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
-
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Giá gốc (VNĐ) *</label>
                         <input
@@ -73,7 +74,6 @@
                             value="<?= htmlspecialchars((string) ($editProduct['gia_goc'] ?? '0')) ?>"
                         >
                     </div>
-
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Hình ảnh (tùy chọn)</label>
                         <input
@@ -96,7 +96,6 @@
                             </div>
                         <?php endif; ?>
                     </div>
-
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Mô tả</label>
                         <textarea
@@ -105,7 +104,6 @@
                             class="form-control border-coffee-soft"
                         ><?= htmlspecialchars((string) ($editProduct['mo_ta'] ?? '')) ?></textarea>
                     </div>
-
                     <div class="col-12 d-flex justify-content-between align-items-center pt-1">
                         <div class="form-check">
                             <input
@@ -118,7 +116,6 @@
                             >
                             <label class="form-check-label small" for="prodConBan">Đang mở bán</label>
                         </div>
-
                         <button type="submit" class="btn btn-moss rounded-pill px-4">
                             <?= !empty($editProduct) ? 'Lưu cập nhật' : 'Thêm món' ?>
                         </button>
@@ -240,7 +237,6 @@
                         value="<?= htmlspecialchars((string) ($editCategory['ten_danh_muc'] ?? '')) ?>"
                     >
                 </div>
-
                 <div class="row g-3 mb-3">
                     <div class="col-sm-6">
                         <label class="form-label small fw-semibold">Loại món *</label>
@@ -263,7 +259,6 @@
                         >
                     </div>
                 </div>
-
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="form-check">
                         <input
@@ -276,7 +271,6 @@
                         >
                         <label class="form-check-label small" for="catConBan">Đang bán</label>
                     </div>
-
                     <button type="submit" class="btn btn-moss rounded-pill px-4">
                         <?= !empty($editCategory) ? 'Lưu danh mục' : 'Thêm danh mục' ?>
                     </button>
@@ -372,13 +366,19 @@
                         <option value="">-- Chọn món --</option>
                         <?php $curProdId = (int) ($editSize['san_pham_id'] ?? 0); ?>
                         <?php foreach ($products as $prod): ?>
-                            <option value="<?= (int) $prod['id'] ?>" <?= $curProdId === (int) $prod['id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars((string) $prod['ten_san_pham']) ?>
+                            <?php
+                            $isSelling = (int) ($prod['con_ban'] ?? 1) === 1;
+                            $isCurrentEditProd = ($curProdId === (int) $prod['id']);
+                            if (!$isSelling && !$isCurrentEditProd) {
+                                continue;
+                            }
+                            ?>
+                            <option value="<?= (int) $prod['id'] ?>" <?= $isCurrentEditProd ? 'selected' : '' ?>>
+                                <?= htmlspecialchars((string) $prod['ten_san_pham']) ?><?= !$isSelling ? ' (Ngưng bán)' : '' ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-
                 <div class="col-md-6">
                     <label class="form-label small fw-semibold">Tên size *</label>
                     <input
@@ -390,7 +390,6 @@
                         required
                     >
                 </div>
-
                 <div class="col-md-6">
                     <label class="form-label small fw-semibold">Giá cộng thêm (VNĐ)</label>
                     <input
@@ -403,7 +402,6 @@
                         required
                     >
                 </div>
-
                 <div class="col-md-6 d-flex flex-column justify-content-end gap-1">
                     <div class="form-check">
                         <input
@@ -428,7 +426,6 @@
                         <label class="form-check-label small" for="sizeConBan">Đang áp dụng</label>
                     </div>
                 </div>
-
                 <div class="col-12 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-moss rounded-pill px-4">
                         <?= !empty($editSize) ? 'Lưu thay đổi' : 'Thêm size' ?>
@@ -517,7 +514,6 @@
                         required
                     >
                 </div>
-
                 <div class="col-md-6">
                     <label class="form-label small fw-semibold">Giá bán (VNĐ) *</label>
                     <input
@@ -530,7 +526,6 @@
                         required
                     >
                 </div>
-
                 <div class="col-12">
                     <div class="form-check">
                         <input
@@ -544,7 +539,6 @@
                         <label class="form-check-label small" for="toppingConBan">Đang bán</label>
                     </div>
                 </div>
-
                 <div class="col-12 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-moss rounded-pill px-4">
                         <?= !empty($editTopping) ? 'Lưu thay đổi' : 'Thêm topping' ?>
@@ -630,21 +624,15 @@ document.addEventListener('DOMContentLoaded', function () {
         prodRows.forEach(function (row) {
             const catId = row.getAttribute('data-category-id');
             const isActive = row.getAttribute('data-active') === '1';
-
             const matchCat = (selectedCat === 'all' || catId === selectedCat);
             const matchStatus = (isActive || showStoppedProducts);
             const show = matchCat && matchStatus;
-
             row.style.display = show ? '' : 'none';
             if (show) visibleCount++;
         });
 
-        if (prodCountEl) {
-            prodCountEl.textContent = String(visibleCount);
-        }
-        if (emptyProdRow) {
-            emptyProdRow.style.display = visibleCount === 0 ? '' : 'none';
-        }
+        if (prodCountEl) prodCountEl.textContent = String(visibleCount);
+        if (emptyProdRow) emptyProdRow.style.display = visibleCount === 0 ? '' : 'none';
         if (btnStoppedProd) {
             btnStoppedProd.textContent = showStoppedProducts ? 'Ẩn món ngưng bán' : 'Hiện món ngưng bán';
         }
@@ -656,25 +644,18 @@ document.addEventListener('DOMContentLoaded', function () {
         catRows.forEach(function (row) {
             const isActive = row.getAttribute('data-active') === '1';
             const show = (isActive || showStoppedCategories);
-
             row.style.display = show ? '' : 'none';
             if (show) visibleCount++;
         });
 
-        if (catCountEl) {
-            catCountEl.textContent = String(visibleCount);
-        }
-        if (emptyCatRow) {
-            emptyCatRow.style.display = visibleCount === 0 ? '' : 'none';
-        }
+        if (catCountEl) catCountEl.textContent = String(visibleCount);
+        if (emptyCatRow) emptyCatRow.style.display = visibleCount === 0 ? '' : 'none';
         if (btnStoppedCat) {
             btnStoppedCat.textContent = showStoppedCategories ? 'Ẩn DM ngưng bán' : 'Hiện DM ngưng bán';
         }
     }
 
-    if (selectFilter) {
-        selectFilter.addEventListener('change', updateProductsView);
-    }
+    if (selectFilter) selectFilter.addEventListener('change', updateProductsView);
     if (btnStoppedProd) {
         btnStoppedProd.addEventListener('click', function () {
             showStoppedProducts = !showStoppedProducts;

@@ -2,6 +2,11 @@
 
 require_once __DIR__ . '/../models/ProductModel.php';
 
+/* ==================================================
+   NHÓM: TRANG CHỦ & THỰC ĐƠN
+================================================== */
+
+/** Trang chủ: tải danh sách món nổi bật từ dữ liệu đang bán. */
 function homeIndex(): void
 {
     $products = getFeaturedProducts(6);
@@ -12,6 +17,7 @@ function homeIndex(): void
     ]);
 }
 
+/** Thực đơn: kết hợp bộ lọc danh mục/từ khóa với danh sách topping để tùy chỉnh món. */
 function homeMenu(): void
 {
     $categoryId = isset($_GET['category']) && $_GET['category'] !== ''

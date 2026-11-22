@@ -1,4 +1,5 @@
 <?php
+// Dashboard chi su dung du lieu tong hop theo khoang ngay; so doanh thu hoan thanh khong nham voi so lieu da huy.
 $statusLabels = [
     'cho_xac_nhan' => ['Chờ xác nhận', 'bg-warning text-dark'],
     'dang_pha_che' => ['Đang pha chế', 'bg-info text-dark'],

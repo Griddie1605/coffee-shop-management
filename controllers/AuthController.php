@@ -1,5 +1,10 @@
 <?php
 
+require_once __DIR__ . '/../models/UserModel.php';
+
+/**
+ * Đăng nhập: kiểm tra thông tin đăng nhập, trạng thái hoạt động và tạo phiên an toàn.
+ */
 function authLogin(): void
 {
     if (!empty($_SESSION['user'])) {
@@ -17,15 +22,7 @@ function authLogin(): void
         if ($email === '' || $password === '') {
             $error = 'Vui lòng nhập đầy đủ email và mật khẩu.';
         } else {
-            $pdo = db_connect();
-            $stmt = $pdo->prepare(
-                "SELECT id, ho_ten, email, so_dien_thoai, mat_khau, dia_chi, vai_tro, trang_thai_hoat_dong
-                 FROM nguoi_dung
-                 WHERE email = :email
-                 LIMIT 1"
-            );
-            $stmt->execute([':email' => $email]);
-            $user = $stmt->fetch();
+            $user = findUserByEmail($email);
 
             if (!$user || !password_verify($password, (string) $user['mat_khau'])) {
                 $error = 'Email hoặc mật khẩu không chính xác.';
@@ -62,6 +59,9 @@ function authLogin(): void
     ]);
 }
 
+/**
+ * Đăng ký: kiểm tra hợp lệ, chống trùng email, băm mật khẩu và tự động đăng nhập.
+ */
 function authRegister(): void
 {
     if (!empty($_SESSION['user'])) {
@@ -93,44 +93,29 @@ function authRegister(): void
             $error = 'Mật khẩu phải có ít nhất 6 ký tự.';
         } elseif ($password !== $confirmPassword) {
             $error = 'Mật khẩu xác nhận không khớp.';
+        } elseif (findUserByEmail($old['email']) !== null) {
+            $error = 'Email này đã được sử dụng.';
         } else {
-            $pdo = db_connect();
-            $checkStmt = $pdo->prepare("SELECT id FROM nguoi_dung WHERE email = :email LIMIT 1");
-            $checkStmt->execute([':email' => $old['email']]);
+            $newId = createCustomerUser([
+                'ho_ten' => $old['ho_ten'],
+                'email' => $old['email'],
+                'so_dien_thoai' => $old['so_dien_thoai'],
+                'mat_khau' => password_hash($password, PASSWORD_DEFAULT),
+                'dia_chi' => $old['dia_chi'],
+            ]);
 
-            if ($checkStmt->fetch()) {
-                $error = 'Email này đã được sử dụng.';
-            } else {
-                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                $insertStmt = $pdo->prepare(
-                    "INSERT INTO nguoi_dung (
-                        ho_ten, email, so_dien_thoai, mat_khau, dia_chi, vai_tro, trang_thai_hoat_dong
-                    ) VALUES (
-                        :ho_ten, :email, :so_dien_thoai, :mat_khau, :dia_chi, 'khach_hang', 1
-                    )"
-                );
-                $insertStmt->execute([
-                    ':ho_ten' => $old['ho_ten'],
-                    ':email' => $old['email'],
-                    ':so_dien_thoai' => $old['so_dien_thoai'] !== '' ? $old['so_dien_thoai'] : null,
-                    ':mat_khau' => $hashedPassword,
-                    ':dia_chi' => $old['dia_chi'] !== '' ? $old['dia_chi'] : null,
-                ]);
+            session_regenerate_id(true);
+            $_SESSION['user'] = [
+                'id' => $newId,
+                'ho_ten' => $old['ho_ten'],
+                'email' => $old['email'],
+                'so_dien_thoai' => $old['so_dien_thoai'],
+                'dia_chi' => $old['dia_chi'],
+                'vai_tro' => 'khach_hang',
+            ];
 
-                $newId = (int) $pdo->lastInsertId();
-                session_regenerate_id(true);
-                $_SESSION['user'] = [
-                    'id' => $newId,
-                    'ho_ten' => $old['ho_ten'],
-                    'email' => $old['email'],
-                    'so_dien_thoai' => $old['so_dien_thoai'],
-                    'dia_chi' => $old['dia_chi'],
-                    'vai_tro' => 'khach_hang',
-                ];
-
-                header('Location: ' . BASE_URL . '/?c=home&a=menu');
-                exit;
-            }
+            header('Location: ' . BASE_URL . '/?c=home&a=menu');
+            exit;
         }
     }
 
@@ -141,6 +126,9 @@ function authRegister(): void
     ]);
 }
 
+/**
+ * Đăng xuất: xóa phiên người dùng và làm mới session ID.
+ */
 function authLogout(): void
 {
     unset($_SESSION['user']);

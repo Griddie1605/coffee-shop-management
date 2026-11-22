@@ -128,6 +128,7 @@
             <div class="vstack gap-3 mb-3">
                 <?php foreach ($cartItems as $item): ?>
                     <?php
+                    // Trang thanh toán dùng dữ liệu giỏ hàng/session làm nguồn tổng tiền và chỉ hiển thị dữ liệu đã được validate ở controller.
                     $qty = (int) ($item['qty'] ?? 1);
                     $lineTotal = ((float) ($item['price'] ?? 0)) * $qty;
                     ?>

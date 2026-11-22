@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Tạo kết nối PDO dùng chung cho toàn bộ ứng dụng.
+ * Singleton tại mức request giúp tránh mở nhiều kết nối cho cùng một lần truy cập.
+ */
 function db_connect(): PDO
 {
     static $pdo = null;

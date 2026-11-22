@@ -1,65 +1,23 @@
 <?php
 
 require_once __DIR__ . '/../models/ProductModel.php';
+require_once __DIR__ . '/../models/VoucherModel.php';
 
-function cartAdd(): void
+/**
+ * Tính lại thông tin món, size, topping và đơn giá từ CSDL để chống chỉnh sửa giá phía client.
+ */
+function buildValidatedCartItem(int $productId, int $sizeId, array $rawToppingIds, string $note, int $qty): ?array
 {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header('Location: ' . BASE_URL . '/?c=home&a=menu');
-        exit;
-    }
-
-    $productId = (int) ($_POST['product_id'] ?? 0);
-    $qty = max(1, (int) ($_POST['qty'] ?? 1));
-    $note = mb_substr(trim((string) ($_POST['note'] ?? '')), 0, 200); // Lấy ghi chú từ modal
-
-    $pdo = db_connect();
-    $stmt = $pdo->prepare(
-        "SELECT id, ten_san_pham, gia_goc
-         FROM san_pham
-         WHERE id = :id AND con_ban = 1
-         LIMIT 1"
-    );
-    $stmt->execute([':id' => $productId]);
-    $product = $stmt->fetch();
-
+    $product = findActiveProductById($productId);
     if (!$product) {
-        $_SESSION['flash_message'] = 'Món không tồn tại hoặc đã ngừng bán.';
-        header('Location: ' . BASE_URL . '/?c=home&a=menu');
-        exit;
+        return null;
     }
-
-    $sizeId = (int) ($_POST['size_id'] ?? 0);
-    $rawToppingIds = $_POST['topping_ids'] ?? [];
-    $toppingIds = [];
-
-    if (is_array($rawToppingIds)) {
-        foreach ($rawToppingIds as $tid) {
-            $idInt = (int) $tid;
-            if ($idInt > 0) {
-                $toppingIds[$idInt] = $idInt;
-            }
-        }
-    }
-    $toppingIds = array_values($toppingIds);
-    sort($toppingIds);
 
     $unitPrice = (float) $product['gia_goc'];
     $sizeName = '';
 
-    // Kiểm tra size hợp lệ thuộc đúng sản phẩm
     if ($sizeId > 0) {
-        $stmtSize = $pdo->prepare(
-            "SELECT id, ten_size, gia_cong_them
-             FROM bien_the_san_pham
-             WHERE id = :id AND san_pham_id = :product_id AND con_ban = 1
-             LIMIT 1"
-        );
-        $stmtSize->execute([
-            ':id' => $sizeId,
-            ':product_id' => $productId,
-        ]);
-        $sizeRow = $stmtSize->fetch();
+        $sizeRow = findActiveProductSize($sizeId, $productId);
         if ($sizeRow) {
             $sizeName = (string) $sizeRow['ten_size'];
             $unitPrice += (float) $sizeRow['gia_cong_them'];
@@ -68,34 +26,21 @@ function cartAdd(): void
         }
     }
 
+    $toppingRows = getActiveToppingsByIds($rawToppingIds);
+    $toppingIds = [];
     $toppingNames = [];
-    // Lấy giá topping chuẩn từ DB để cộng vào đơn giá
-    if (!empty($toppingIds)) {
-        $placeholders = implode(',', array_fill(0, count($toppingIds), '?'));
-        $stmtTop = $pdo->prepare(
-            "SELECT id, ten_topping, gia_ban
-             FROM topping
-             WHERE id IN ($placeholders) AND con_ban = 1
-             ORDER BY id ASC"
-        );
-        $stmtTop->execute($toppingIds);
-        $topRows = $stmtTop->fetchAll();
-
-        $toppingIds = [];
-        foreach ($topRows as $top) {
-            $toppingIds[] = (int) $top['id'];
-            $toppingNames[] = (string) $top['ten_topping'];
-            $unitPrice += (float) $top['gia_ban'];
-        }
+    foreach ($toppingRows as $top) {
+        $toppingIds[] = (int) $top['id'];
+        $toppingNames[] = (string) $top['ten_topping'];
+        $unitPrice += (float) $top['gia_ban'];
     }
 
-    if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
-        $_SESSION['cart'] = [];
-    }
-
-    // Tách dòng nếu khác sản phẩm, size, topping hoặc ghi chú
+    // Tách dòng giỏ hàng khi món, size, topping hoặc ghi chú khác nhau.
     $noteHash = $note !== '' ? md5($note) : '0';
-    $key = 'p_' . $productId . '_s_' . $sizeId . '_t_' . (!empty($toppingIds) ? implode('-', $toppingIds) : '0') . '_n_' . $noteHash;
+    $key = 'p_' . $productId
+        . '_s_' . $sizeId
+        . '_t_' . (!empty($toppingIds) ? implode('-', $toppingIds) : '0')
+        . '_n_' . $noteHash;
 
     $displayName = (string) $product['ten_san_pham'];
     if ($sizeName !== '') {
@@ -105,26 +50,63 @@ function cartAdd(): void
         $displayName .= ' + ' . implode(', ', $toppingNames);
     }
 
-    if (isset($_SESSION['cart'][$key])) {
-        $_SESSION['cart'][$key]['qty'] = min(50, (int) $_SESSION['cart'][$key]['qty'] + $qty);
-    } else {
-        // Chỉ lưu 1 item duy nhất, ghi chú nằm riêng trong trường 'note'
-        $_SESSION['cart'][$key] = [
+    return [
+        'key' => $key,
+        'product_name' => (string) $product['ten_san_pham'],
+        'item' => [
             'product_id' => $productId,
             'size_id' => $sizeId,
             'topping_ids' => $toppingIds,
             'name' => $displayName,
             'note' => $note,
             'price' => $unitPrice,
-            'qty' => $qty,
-        ];
+            'qty' => max(1, min(50, $qty)),
+        ],
+    ];
+}
+
+/**
+ * Thêm món vào giỏ hàng.
+ */
+function cartAdd(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Location: ' . BASE_URL . '/?c=home&a=menu');
+        exit;
     }
 
-    $_SESSION['flash_message'] = 'Đã thêm "' . $product['ten_san_pham'] . '" (x' . $qty . ') vào giỏ hàng.';
+    $productId = (int) ($_POST['product_id'] ?? 0);
+    $sizeId = (int) ($_POST['size_id'] ?? 0);
+    $rawToppingIds = is_array($_POST['topping_ids'] ?? null) ? $_POST['topping_ids'] : [];
+    $qty = max(1, (int) ($_POST['qty'] ?? 1));
+    $note = mb_substr(trim((string) ($_POST['note'] ?? '')), 0, 200);
+
+    $built = buildValidatedCartItem($productId, $sizeId, $rawToppingIds, $note, $qty);
+    if ($built === null) {
+        $_SESSION['flash_message'] = 'Món không tồn tại hoặc đã ngừng bán.';
+        header('Location: ' . BASE_URL . '/?c=home&a=menu');
+        exit;
+    }
+
+    if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
+        $_SESSION['cart'] = [];
+    }
+
+    $key = $built['key'];
+    if (isset($_SESSION['cart'][$key])) {
+        $_SESSION['cart'][$key]['qty'] = min(50, (int) $_SESSION['cart'][$key]['qty'] + $qty);
+    } else {
+        $_SESSION['cart'][$key] = $built['item'];
+    }
+
+    $_SESSION['flash_message'] = 'Đã thêm "' . $built['product_name'] . '" (x' . $qty . ') vào giỏ hàng.';
     header('Location: ' . BASE_URL . '/?c=home&a=menu');
     exit;
 }
 
+/**
+ * Hiển thị giỏ hàng kèm danh sách size/topping để chỉnh sửa trực tiếp.
+ */
 function cartIndex(): void
 {
     $cartItems = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
@@ -135,12 +117,11 @@ function cartIndex(): void
         $totalAmount += ((float) ($item['price'] ?? 0)) * ((int) ($item['qty'] ?? 1));
         $pid = (int) ($item['product_id'] ?? 0);
         if ($pid > 0 && !isset($sizesByProduct[$pid])) {
-            // Lay danh sach size theo tung mon co trong gio
             $sizesByProduct[$pid] = getProductSizes($pid);
         }
     }
-    $toppings = getActiveToppings();
 
+    $toppings = getActiveToppings();
     $discountAmount = 0.0;
     $appliedVoucher = isset($_SESSION['voucher']) && is_array($_SESSION['voucher']) ? $_SESSION['voucher'] : null;
 
@@ -153,7 +134,7 @@ function cartIndex(): void
             $discountAmount = calculateVoucherDiscount($appliedVoucher, $totalAmount);
         }
     }
-    
+
     $finalAmount = max(0.0, $totalAmount - $discountAmount);
 
     render('cart/index', [
@@ -168,7 +149,9 @@ function cartIndex(): void
     ]);
 }
 
-#Cập nhật số lượng và Xoá món
+/**
+ * Cập nhật số lượng các dòng trong giỏ (số lượng <= 0 sẽ xóa dòng đó).
+ */
 function cartUpdate(): void
 {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -196,6 +179,9 @@ function cartUpdate(): void
     exit;
 }
 
+/**
+ * Xóa một dòng khỏi giỏ hàng.
+ */
 function cartRemove(): void
 {
     $key = (string) ($_GET['key'] ?? '');
@@ -208,9 +194,12 @@ function cartRemove(): void
     exit;
 }
 
+/**
+ * Sửa lại size, topping, ghi chú hoặc số lượng của một dòng đang có trong giỏ.
+ */
 function cartEdit(): void
 {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST'){
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         header('Location: ' . BASE_URL . '/?c=cart&a=index');
         exit;
     }
@@ -221,114 +210,26 @@ function cartEdit(): void
         exit;
     }
 
-    $currentItem = $_SESSION['cart'][$oldKey];
-    $productId = (int) ($currentItem['product_id'] ?? 0);
+    $productId = (int) ($_SESSION['cart'][$oldKey]['product_id'] ?? 0);
+    $sizeId = (int) ($_POST['size_id'] ?? 0);
+    $rawToppingIds = is_array($_POST['topping_ids'] ?? null) ? $_POST['topping_ids'] : [];
     $qty = max(1, min(50, (int) ($_POST['qty'] ?? 1)));
     $note = mb_substr(trim((string) ($_POST['note'] ?? '')), 0, 200);
 
-    $pdo = db_connect();
-    $stmt = $pdo->prepare(
-        "SELECT id, ten_san_pham, gia_goc
-         FROM san_pham
-         WHERE id = :id AND con_ban = 1
-         LIMIT 1"
-    );
-    $stmt->execute([':id' => $productId]);
-    $product = $stmt->fetch();
+    $built = buildValidatedCartItem($productId, $sizeId, $rawToppingIds, $note, $qty);
+    unset($_SESSION['cart'][$oldKey]);
 
-    if (!$product) {
-        unset($_SESSION['cart'][$oldKey]);
+    if ($built === null) {
         $_SESSION['cart_message'] = 'Món không còn bán nên đã xóa khỏi giỏ.';
         header('Location: ' . BASE_URL . '/?c=cart&a=index');
         exit;
     }
 
-    $sizeId = (int) ($_POST['size_id'] ?? 0);
-    $rawToppingIds = $_POST['topping_ids'] ?? [];
-    $toppingIds = [];
-
-    if (is_array($rawToppingIds)) {
-        foreach ($rawToppingIds as $tid) {
-            $idInt = (int) $tid;
-            if ($idInt > 0) {
-                $toppingIds[$idInt] = $idInt;
-            }
-        }
-    }
-    $toppingIds = array_values($toppingIds);
-    sort($toppingIds);
-
-    $unitPrice = (float) $product['gia_goc'];
-    $sizeName = '';
-
-    // Kiểm tra size hợp lệ thuộc đúng sản phẩm
-    if ($sizeId > 0) {
-        $stmtSize = $pdo->prepare(
-            "SELECT id, ten_size, gia_cong_them
-             FROM bien_the_san_pham
-             WHERE id = :id AND san_pham_id = :product_id AND con_ban = 1
-             LIMIT 1"
-        );
-        $stmtSize->execute([
-            ':id' => $sizeId,
-            ':product_id' => $productId,
-        ]);
-        $sizeRow = $stmtSize->fetch();
-        if ($sizeRow) {
-            $sizeName = (string) $sizeRow['ten_size'];
-            $unitPrice += (float) $sizeRow['gia_cong_them'];
-        } else {
-            $sizeId = 0;
-        }
-    }
-
-    $toppingNames = [];
-    // Lấy giá topping chuẩn từ DB
-    if (!empty($toppingIds)) {
-        $placeholders = implode(',', array_fill(0, count($toppingIds), '?'));
-        $stmtTop = $pdo->prepare(
-            "SELECT id, ten_topping, gia_ban
-             FROM topping
-             WHERE id IN ($placeholders) AND con_ban = 1
-             ORDER BY id ASC"
-        );
-        $stmtTop->execute($toppingIds);
-        $topRows = $stmtTop->fetchAll();
-
-        $toppingIds = [];
-        foreach ($topRows as $top) {
-            $toppingIds[] = (int) $top['id'];
-            $toppingNames[] = (string) $top['ten_topping'];
-            $unitPrice += (float) $top['gia_ban'];
-        }
-    }
-
-    $noteHash = $note !== '' ? md5($note) : '0';
-    $newKey = 'p_' . $productId . '_s_' . $sizeId . '_t_' . (!empty($toppingIds) ? implode('-', $toppingIds) : '0') . '_n_' . $noteHash;
-
-    $displayName = (string) $product['ten_san_pham'];
-    if ($sizeName !== '') {
-        $displayName .= ' (Size ' . $sizeName . ')';
-    }
-    if (!empty($toppingNames)) {
-        $displayName .= ' + ' . implode(', ', $toppingNames);
-    }
-
-    // Xóa dòng cũ trước khi ghi vào key mới để tránh trùng dòng
-    unset($_SESSION['cart'][$oldKey]);
-
+    $newKey = $built['key'];
     if (isset($_SESSION['cart'][$newKey])) {
         $_SESSION['cart'][$newKey]['qty'] = min(50, (int) $_SESSION['cart'][$newKey]['qty'] + $qty);
     } else {
-        $_SESSION['cart'][$newKey] = [
-            'product_id' => $productId,
-            'size_id' => $sizeId,
-            'topping_ids' => $toppingIds,
-            'name' => $displayName,
-            'note' => $note,
-            'price' => $unitPrice,
-            'qty' => $qty,
-        ];
+        $_SESSION['cart'][$newKey] = $built['item'];
     }
 
     $_SESSION['cart_message'] = 'Đã cập nhật tùy chọn món.';
@@ -336,30 +237,25 @@ function cartEdit(): void
     exit;
 }
 
-
+/**
+ * Tính số tiền được giảm theo loại voucher (phần trăm hoặc số tiền cố định).
+ */
 function calculateVoucherDiscount(array $voucher, float $subtotal): float
 {
-    if ($subtotal <= 0) {
+    if ($subtotal <= 0 || $subtotal < (float) ($voucher['don_toi_thieu'] ?? 0)) {
         return 0.0;
     }
 
-    $minOrder = (float) ($voucher['don_toi_thieu'] ?? 0); // Kiểm tra giá trị đơn tối thiểu[cite: 12]
-    if ($subtotal < $minOrder) {
-        return 0.0;
-    }
-
-    $type = (string) ($voucher['kieu_giam'] ?? 'so_tien'); // 'phan_tram' hoặc 'so_tien'[cite: 12]
+    $type = (string) ($voucher['kieu_giam'] ?? 'so_tien');
     $value = (float) ($voucher['gia_tri_giam'] ?? 0);
-
-    if ($type === 'phan_tram') {
-        $discount = $subtotal * ($value / 100.0);
-    } else {
-        $discount = $value;
-    }
+    $discount = ($type === 'phan_tram') ? ($subtotal * ($value / 100.0)) : $value;
 
     return min($subtotal, max(0.0, round($discount, 2)));
 }
 
+/**
+ * Kiểm tra điều kiện và lưu voucher vào session.
+ */
 function cartApplyVoucher(): void
 {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -380,17 +276,7 @@ function cartApplyVoucher(): void
         $subtotal += ((float) ($item['price'] ?? 0)) * ((int) ($item['qty'] ?? 1));
     }
 
-    $pdo = db_connect();
-    // Chỉ lấy mã còn hiệu lực và chưa hết hạn (nếu có ngày hết hạn)[cite: 12]
-    $stmt = $pdo->prepare(
-        "SELECT id, ma_code, kieu_giam, gia_tri_giam, don_toi_thieu, ngay_het_han, con_hieu_luc
-         FROM ma_giam_gia
-         WHERE UPPER(ma_code) = :code AND con_hieu_luc = 1
-         LIMIT 1"
-    );
-    $stmt->execute([':code' => $code]);
-    $voucher = $stmt->fetch();
-
+    $voucher = findActiveVoucherByCode($code);
     if (!$voucher) {
         unset($_SESSION['voucher']);
         $_SESSION['cart_message'] = 'Mã giảm giá không tồn tại hoặc đã ngừng hiệu lực.';
@@ -405,7 +291,7 @@ function cartApplyVoucher(): void
         exit;
     }
 
-    $minOrder = (float) ($voucher['don_toi_thieu'] ?? 0); //[cite: 12]
+    $minOrder = (float) ($voucher['don_toi_thieu'] ?? 0);
     if ($subtotal < $minOrder) {
         unset($_SESSION['voucher']);
         $_SESSION['cart_message'] = 'Đơn tối thiểu ' . format_vnd($minOrder) . ' mới áp dụng được mã này.';
@@ -419,6 +305,9 @@ function cartApplyVoucher(): void
     exit;
 }
 
+/**
+ * Gỡ mã giảm giá đang áp dụng khỏi phiên giỏ hàng.
+ */
 function cartRemoveVoucher(): void
 {
     unset($_SESSION['voucher']);
