@@ -205,7 +205,46 @@
             </form>
         </div>
     </div>
+           <!-- Khối mã giảm giá đặt tách rời khỏi form cập nhật số lượng -->       
+            <div class="card card-coffee p-4 mt-3">
+                            <div class="row g-3 align-items-center justify-content-between">
+                                <div class="col-md-6">
+                                    <form method="POST" action="<?= BASE_URL ?>/?c=cart&a=applyVoucher" class="d-flex gap-2">
+                                        <input
+                                            type="text"
+                                            name="voucher_code"
+                                            class="form-control form-control-sm border-coffee-soft text-uppercase"
+                                            placeholder="Nhập mã giảm giá (ví dụ: GIAM10K, SALE15)"
+                                            value="<?= htmlspecialchars((string) ($appliedVoucher['ma_code'] ?? '')) ?>"
+                                        >
+                                        <button type="submit" class="btn btn-sm btn-moss rounded-pill px-3 text-nowrap">
+                                            Áp dụng
+                                        </button>
+                                        <?php if (!empty($appliedVoucher)): ?>
+                                            <a
+                                                href="<?= BASE_URL ?>/?c=cart&a=removeVoucher"
+                                                class="btn btn-sm btn-outline-danger rounded-pill px-3 text-nowrap"
+                                            >
+                                                Gỡ mã
+                                            </a>
+                                        <?php endif; ?>
+                                    </form>
+                                </div>
 
+                                <div class="col-md-6 text-md-end">
+                                    <?php if ($discountAmount > 0): ?>
+                                        <div class="small text-coffee-muted">
+                                            Giảm giá (<?= htmlspecialchars((string) ($appliedVoucher['ma_code'] ?? '')) ?>):
+                                            <strong class="text-success">-<?= format_vnd($discountAmount) ?></strong>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="fs-5 mt-1">
+                                        <span>Thanh toán:</span>
+                                        <strong class="price-moss ms-2"><?= format_vnd($finalAmount) ?></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const cartForm = document.querySelector('form[action*="c=cart&a=update"]');

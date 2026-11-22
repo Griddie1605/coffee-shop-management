@@ -141,12 +141,30 @@ function cartIndex(): void
     }
     $toppings = getActiveToppings();
 
+    $discountAmount = 0.0;
+    $appliedVoucher = isset($_SESSION['voucher']) && is_array($_SESSION['voucher']) ? $_SESSION['voucher'] : null;
+
+    if ($appliedVoucher !== null && $totalAmount > 0) {
+        $expired = !empty($appliedVoucher['ngay_het_han']) && strtotime((string) $appliedVoucher['ngay_het_han']) < time();
+        if ($expired || $totalAmount < (float) ($appliedVoucher['don_toi_thieu'] ?? 0)) {
+            unset($_SESSION['voucher']);
+            $appliedVoucher = null;
+        } else {
+            $discountAmount = calculateVoucherDiscount($appliedVoucher, $totalAmount);
+        }
+    }
+    
+    $finalAmount = max(0.0, $totalAmount - $discountAmount);
+
     render('cart/index', [
         'pageTitle' => 'Giỏ hàng - 47th cafe',
         'cartItems' => $cartItems,
         'sizesByProduct' => $sizesByProduct,
         'toppings' => $toppings,
         'totalAmount' => $totalAmount,
+        'appliedVoucher' => $appliedVoucher,
+        'discountAmount' => $discountAmount,
+        'finalAmount' => $finalAmount,
     ]);
 }
 
@@ -314,6 +332,97 @@ function cartEdit(): void
     }
 
     $_SESSION['cart_message'] = 'Đã cập nhật tùy chọn món.';
+    header('Location: ' . BASE_URL . '/?c=cart&a=index');
+    exit;
+}
+
+
+function calculateVoucherDiscount(array $voucher, float $subtotal): float
+{
+    if ($subtotal <= 0) {
+        return 0.0;
+    }
+
+    $minOrder = (float) ($voucher['don_toi_thieu'] ?? 0); // Kiểm tra giá trị đơn tối thiểu[cite: 12]
+    if ($subtotal < $minOrder) {
+        return 0.0;
+    }
+
+    $type = (string) ($voucher['kieu_giam'] ?? 'so_tien'); // 'phan_tram' hoặc 'so_tien'[cite: 12]
+    $value = (float) ($voucher['gia_tri_giam'] ?? 0);
+
+    if ($type === 'phan_tram') {
+        $discount = $subtotal * ($value / 100.0);
+    } else {
+        $discount = $value;
+    }
+
+    return min($subtotal, max(0.0, round($discount, 2)));
+}
+
+function cartApplyVoucher(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Location: ' . BASE_URL . '/?c=cart&a=index');
+        exit;
+    }
+
+    $code = strtoupper(trim((string) ($_POST['voucher_code'] ?? '')));
+    if ($code === '') {
+        $_SESSION['cart_message'] = 'Vui lòng nhập mã giảm giá.';
+        header('Location: ' . BASE_URL . '/?c=cart&a=index');
+        exit;
+    }
+
+    $cartItems = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
+    $subtotal = 0.0;
+    foreach ($cartItems as $item) {
+        $subtotal += ((float) ($item['price'] ?? 0)) * ((int) ($item['qty'] ?? 1));
+    }
+
+    $pdo = db_connect();
+    // Chỉ lấy mã còn hiệu lực và chưa hết hạn (nếu có ngày hết hạn)[cite: 12]
+    $stmt = $pdo->prepare(
+        "SELECT id, ma_code, kieu_giam, gia_tri_giam, don_toi_thieu, ngay_het_han, con_hieu_luc
+         FROM ma_giam_gia
+         WHERE UPPER(ma_code) = :code AND con_hieu_luc = 1
+         LIMIT 1"
+    );
+    $stmt->execute([':code' => $code]);
+    $voucher = $stmt->fetch();
+
+    if (!$voucher) {
+        unset($_SESSION['voucher']);
+        $_SESSION['cart_message'] = 'Mã giảm giá không tồn tại hoặc đã ngừng hiệu lực.';
+        header('Location: ' . BASE_URL . '/?c=cart&a=index');
+        exit;
+    }
+
+    if (!empty($voucher['ngay_het_han']) && strtotime((string) $voucher['ngay_het_han']) < time()) {
+        unset($_SESSION['voucher']);
+        $_SESSION['cart_message'] = 'Mã giảm giá đã hết hạn.';
+        header('Location: ' . BASE_URL . '/?c=cart&a=index');
+        exit;
+    }
+
+    $minOrder = (float) ($voucher['don_toi_thieu'] ?? 0); //[cite: 12]
+    if ($subtotal < $minOrder) {
+        unset($_SESSION['voucher']);
+        $_SESSION['cart_message'] = 'Đơn tối thiểu ' . format_vnd($minOrder) . ' mới áp dụng được mã này.';
+        header('Location: ' . BASE_URL . '/?c=cart&a=index');
+        exit;
+    }
+
+    $_SESSION['voucher'] = $voucher;
+    $_SESSION['cart_message'] = 'Đã áp dụng mã ' . $voucher['ma_code'] . '.';
+    header('Location: ' . BASE_URL . '/?c=cart&a=index');
+    exit;
+}
+
+function cartRemoveVoucher(): void
+{
+    unset($_SESSION['voucher']);
+    $_SESSION['cart_message'] = 'Đã gỡ mã giảm giá.';
     header('Location: ' . BASE_URL . '/?c=cart&a=index');
     exit;
 }
