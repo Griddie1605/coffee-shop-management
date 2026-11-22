@@ -51,6 +51,11 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
                             <li>
                                 <a class="dropdown-item" href="<?= BASE_URL ?>/?c=order&a=index">Đơn hàng của tôi</a>
                             </li>
+                            <?php if (in_array((string) ($_SESSION['user']['vai_tro'] ?? ''), ['quan_tri', 'nhan_vien'], true)): ?>
+                            <li>
+                                <a class="dropdown-item" href="<?= BASE_URL ?>/?c=admin&a=index">Quản trị đơn hàng</a>
+                            </li>
+                            <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item text-danger" href="<?= BASE_URL ?>/?c=auth&a=logout">Đăng xuất</a>
