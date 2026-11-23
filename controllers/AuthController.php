@@ -53,7 +53,7 @@ function authLogin(): void
     }
 
     render('auth/login', [
-        'pageTitle' => 'Đăng nhập - 47th cafe',
+        'pageTitle' => 'Đăng nhập - CF Song Thư',
         'error' => $error,
         'email' => $email,
     ]);
@@ -120,7 +120,7 @@ function authRegister(): void
     }
 
     render('auth/register', [
-        'pageTitle' => 'Đăng ký tài khoản - 47th cafe',
+        'pageTitle' => 'Đăng ký tài khoản - CF Song Thư',
         'error' => $error,
         'old' => $old,
     ]);

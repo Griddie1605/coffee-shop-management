@@ -9,7 +9,7 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? '47th cafe - Trang chủ') ?></title>
+    <title><?= htmlspecialchars($pageTitle ?? 'CF Song Thư - Trang chủ') ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -48,6 +48,10 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
                             <span><?= htmlspecialchars((string) ($_SESSION['user']['ho_ten'] ?? 'Tài khoản')) ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end border-coffee-soft">
+                            <li>
+                                <a class="dropdown-item" href="<?= BASE_URL ?>/?c=account&a=index">Tài khoản của tôi</a>
+                            </li>
+
                             <li>
                                 <a class="dropdown-item" href="<?= BASE_URL ?>/?c=order&a=index">Đơn hàng của tôi</a>
                             </li>
@@ -100,33 +104,20 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
         <div class="container-fluid px-lg-5">
             <div class="row gy-4 align-items-start justify-content-between">
                 <div class="col-12 col-lg-5">
-                    <h3 class="footer-heading">Newsletter</h3>
-                    <p class="footer-subtext">Stay up to date with all the latest from 47th Cafe</p>
-                    <form method="POST" action="#" onsubmit="return false;" class="footer-newsletter-form">
-                        <label for="newsletterEmail" class="form-label footer-email-label">Email *</label>
-                        <input type="email" id="newsletterEmail" class="form-control footer-input">
-
-                        <div class="footer-agree-row">
-                            <div class="form-check footer-check-wrap">
-                                <input class="form-check-input footer-checkbox" type="checkbox" id="newsletterAgree">
-                                <label class="form-check-label footer-agree-text" for="newsletterAgree">
-                                    Yes, subscribe me to your newsletter. *
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-footer-outline">Join</button>
-                        </div>
-                    </form>
+                    <h3 class="footer-heading">Coffee Song Thư</h3>
+                    <p class="footer-subtext">Mỗi ly đồ uống và món ăn kèm đều được chuẩn bị chỉn chu <br>
+                     để bạn có những phút nghỉ ngơi trọn vẹn.</p>
                 </div>
 
                 <div class="col-12 col-lg-3">
-                    <h3 class="footer-heading">Talk to Us</h3>
+                    <h3 class="footer-heading">Contact</h3>
                     <p class="footer-subtext footer-contact-group">
-                        123-456-7890<br>
-                        info@mysite.com
+                        0378095005<br>
+                        trong_dth235799@student.agu.edu.vn
                     </p>
                     <p class="footer-subtext mb-0">
-                        500 Terry Francine St.<br>
-                        San Francisco, CA 94158
+                        669A Phan Tôn<br>
+                        Long Xuyên, An Giang
                     </p>
                 </div>
 
@@ -142,7 +133,7 @@ $cartCount = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? count($_S
     </div>
 
     <div class="footer-copyright-bar py-2 px-3 text-center small">
-        &copy; <?= date('Y') ?> by 47th cafe. Coffee Shop Management System.
+        &copy; <?= date('Y') ?> by CF Song Thư. Coffee Shop Management System.
     </div>
 </footer>
 

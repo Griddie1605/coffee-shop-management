@@ -1,7 +1,7 @@
 <!-- 1. Hero toàn màn hình -->
 <section class="landing-hero d-flex align-items-center">
     <div class="container px-lg-5 landing-hero-content">
-        <p class="landing-kicker mb-2">Love u</p>
+        <p class="landing-kicker mb-2">Song Thư Coffee</p>
         <h1 class="landing-hero-title mb-4">
             Your Go-to Spot for<br>
             Delicious Eats &amp; Coffee
@@ -82,10 +82,10 @@
 
         <div class="row justify-content-center align-items-center g-4">
             <div class="col-md-5">
-                <h3 class="visit-col-title mb-3">Address</h3>
+                <h3 class="visit-col-title mb-3">Địa chỉ</h3>
                 <p class="visit-col-text mb-0">
-                    500 Terry Francine St.<br>
-                    San Francisco, CA 94158
+                    669A Phan Tôn<br>
+                    Long Xuyên, An Giang
                 </p>
             </div>
 
@@ -94,11 +94,11 @@
             </div>
 
             <div class="col-md-5">
-                <h3 class="visit-col-title mb-3">Opening Hours</h3>
+                <h3 class="visit-col-title mb-3">Giờ Mở Cửa</h3>
                 <p class="visit-col-text mb-0">
-                    Mon - Fri: 9am - 6pm<br>
-                    Saturday: 10am - 2pm<br>
-                    Sunday: Closed
+                    Thứ Hai - Thứ Sáu: 9am - 6pm<br>
+                    Thứ Bảy: 10am - 2pm<br>
+                    Chủ Nhật: Đóng Cửa
                 </p>
             </div>
         </div>

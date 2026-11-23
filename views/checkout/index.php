@@ -1,7 +1,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
     <div>
         <h1 class="h2 mb-1">Thanh toán đơn hàng</h1>
-        <p class="mb-0 text-coffee-muted">Điền thông tin nhận hàng và xác nhận đơn tại 47th cafe</p>
+        <p class="mb-0 text-coffee-muted">Điền thông tin nhận hàng và xác nhận đơn tại CF Song Thư</p>
     </div>
     <a href="<?= BASE_URL ?>/?c=cart&a=index" class="btn btn-sm btn-outline-dark rounded-pill px-3">
         Quay lại giỏ hàng

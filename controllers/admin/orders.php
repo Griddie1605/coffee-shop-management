@@ -18,7 +18,7 @@ function adminIndex(): void
     $data = getOrdersWithItems(null, $statusFilter);
 
     render('admin/index', [
-        'pageTitle' => 'Quản trị đơn hàng - 47th cafe',
+        'pageTitle' => 'Quản trị đơn hàng - CF Song Thư',
         'orders' => $data['orders'],
         'itemsByOrder' => $data['itemsByOrder'],
         'statusFilter' => $statusFilter,

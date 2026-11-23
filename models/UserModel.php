@@ -111,3 +111,68 @@ function toggleCustomerActiveStatus(int $customerId): void
     );
     $stmt->execute([':id' => $customerId]);
 }
+
+/**
+ * Lấy thông tin đầy đủ của người dùng theo ID.
+ */
+function findUserById(int $userId): ?array
+{
+    if ($userId <= 0) {
+        return null;
+    }
+    $pdo = db_connect();
+    $stmt = $pdo->prepare(
+        "SELECT id, ho_ten, email, so_dien_thoai, mat_khau, dia_chi, vai_tro, trang_thai_hoat_dong
+         FROM nguoi_dung
+         WHERE id = :id
+         LIMIT 1"
+    );
+    $stmt->execute([':id' => $userId]);
+    $user = $stmt->fetch();
+    return $user ?: null;
+}
+
+/**
+ * Cập nhật họ tên, số điện thoại và địa chỉ mặc định của tài khoản.
+ */
+function updateUserProfile(int $userId, string $hoTen, string $soDienThoai, string $diaChi): bool
+{
+    if ($userId <= 0) {
+        return false;
+    }
+    $pdo = db_connect();
+    $stmt = $pdo->prepare(
+        "UPDATE nguoi_dung
+         SET ho_ten = :ho_ten,
+             so_dien_thoai = :so_dien_thoai,
+             dia_chi = :dia_chi
+         WHERE id = :id"
+    );
+    return $stmt->execute([
+        ':ho_ten' => $hoTen,
+        ':so_dien_thoai' => $soDienThoai !== '' ? $soDienThoai : null,
+        ':dia_chi' => $diaChi !== '' ? $diaChi : null,
+        ':id' => $userId,
+    ]);
+}
+
+/**
+ * Cập nhật mật khẩu đã băm cho tài khoản.
+ */
+function updateUserPassword(int $userId, string $hashedPassword): bool
+{
+    if ($userId <= 0) {
+        return false;
+    }
+    $pdo = db_connect();
+    $stmt = $pdo->prepare(
+        "UPDATE nguoi_dung
+         SET mat_khau = :mat_khau
+         WHERE id = :id"
+    );
+    return $stmt->execute([
+        ':mat_khau' => $hashedPassword,
+        ':id' => $userId,
+    ]);
+}
+

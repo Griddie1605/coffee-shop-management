@@ -58,7 +58,7 @@ function checkoutIndex(): void
     $summary = checkoutCalculateSummary($cartItems);
 
     render('checkout/index', [
-        'pageTitle' => 'Thanh toán - 47th cafe',
+        'pageTitle' => 'Thanh toán - CF Song Thư',
         'cartItems' => $cartItems,
         'subtotal' => $summary['subtotal'],
         'discountAmount' => $summary['discount'],
@@ -162,7 +162,7 @@ function checkoutSuccess(): void
     }
 
     render('checkout/success', [
-        'pageTitle' => 'Đặt hàng thành công - 47th cafe',
+        'pageTitle' => 'Đặt hàng thành công - CF Song Thư',
         'orderCode' => $orderCode,
     ]);
 }

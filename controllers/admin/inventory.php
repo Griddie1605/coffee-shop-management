@@ -112,7 +112,7 @@ function adminInventory(): void
     }
 
     render('admin/inventory', [
-        'pageTitle' => 'Quản lý kho nguyên liệu - 47th cafe',
+        'pageTitle' => 'Quản lý kho nguyên liệu - CF Song Thư',
         'tab' => $tab,
         'kw' => $kw,
         'stockFilter' => $stockFilter,

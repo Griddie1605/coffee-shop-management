@@ -16,7 +16,7 @@ function orderIndex(): void
     $data = getOrdersWithItems($userId);
 
     render('order/index', [
-        'pageTitle' => 'Đơn hàng của tôi - 47th cafe',
+        'pageTitle' => 'Đơn hàng của tôi - CF Song Thư',
         'orders' => $data['orders'],
         'itemsByOrder' => $data['itemsByOrder'],
     ]);

@@ -37,7 +37,7 @@ function adminDashboard(): void
     $avgOrderValue = $activeOrdersCount > 0 ? ($activeRevenue / $activeOrdersCount) : 0.0;
 
     render('admin/dashboard', [
-        'pageTitle' => 'Thống kê & Báo cáo - 47th cafe',
+        'pageTitle' => 'Thống kê & Báo cáo - CF Song Thư',
         'orderStats' => $orderStats,
         'catalogStats' => $catalogStats,
         'avgOrderValue' => $avgOrderValue,

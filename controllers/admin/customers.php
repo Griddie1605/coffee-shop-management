@@ -36,7 +36,7 @@ function adminCustomers(): void
     }
 
     render('admin/customers', [
-        'pageTitle' => 'Quản lý khách hàng - 47th cafe',
+        'pageTitle' => 'Quản lý khách hàng - CF Song Thư',
         'customers' => $customers,
         'keyword' => $keyword,
         'selectedCustomer' => $selectedCustomer,

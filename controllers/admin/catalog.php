@@ -100,7 +100,7 @@ function adminCatalog(): void
     }
 
     render('admin/catalog', [
-        'pageTitle' => 'Quản lý danh mục & sản phẩm - 47th cafe',
+        'pageTitle' => 'Quản lý danh mục & sản phẩm - CF Song Thư',
         'categories' => $categories,
         'products' => $products,
         'sizes' => $sizes,

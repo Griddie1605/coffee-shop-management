@@ -1,6 +1,6 @@
 <div class="card card-coffee p-4 p-md-5 mx-auto" style="max-width: 460px;">
     <h1 class="h3 mb-1">Đăng nhập</h1>
-    <p class="text-coffee-muted small mb-4">Đăng nhập để đặt hàng và theo dõi đơn tại 47th cafe</p>
+    <p class="text-coffee-muted small mb-4">Đăng nhập để đặt hàng và theo dõi đơn tại CF Song Thư</p>
 
     <?php if (!empty($error)): ?>
         <div class="alert alert-danger border-coffee-soft small" role="alert">

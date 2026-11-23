@@ -115,7 +115,7 @@ function cartIndex(): void
     $finalAmount = max(0.0, $totalAmount - $discountAmount);
 
     render('cart/index', [
-        'pageTitle' => 'Giỏ hàng - 47th cafe',
+        'pageTitle' => 'Giỏ hàng - CF Song Thư',
         'cartItems' => $cartItems,
         'toppings' => $toppings,
         'totalAmount' => $totalAmount,
