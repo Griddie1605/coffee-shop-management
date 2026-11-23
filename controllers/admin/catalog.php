@@ -52,6 +52,8 @@ function adminCatalog(): void
     $products = getAllProductsForAdmin();
     $sizes = getAllSizesForAdmin();
     $toppings = getAllToppingsForAdmin();
+    $editToppingId = (int) ($_GET['edit_topping'] ?? 0);
+    $editTopping = $editToppingId > 0 ? findToppingById($editToppingId) : null;
 
     $editCategory = null;
     if (!empty($_GET['edit_cat'])) {
@@ -109,6 +111,7 @@ function adminCatalog(): void
         'editTopping' => $editTopping,
         'flashSuccess' => $_SESSION['admin_success'] ?? '',
         'flashError' => $_SESSION['admin_error'] ?? '',
+        'editTopping' => $editTopping,
     ]);
     unset($_SESSION['admin_success'], $_SESSION['admin_error']);
 }

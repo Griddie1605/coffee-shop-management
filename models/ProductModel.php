@@ -401,3 +401,129 @@ function toggleToppingActive(int $id): void
     $stmt = $pdo->prepare("UPDATE topping SET con_ban = IF(con_ban = 1, 0, 1) WHERE id = :id");
     $stmt->execute([':id' => $id]);
 }
+
+
+/**
+ * Tìm sản phẩm đang còn bán theo ID (kèm danh mục đang mở bán) để tính giá phía server.
+ */
+function findActiveProductById(int $productId): ?array
+{
+    if ($productId <= 0) {
+        return null;
+    }
+    $pdo = db_connect();
+    $stmt = $pdo->prepare(
+        "SELECT sp.id, sp.danh_muc_id, sp.ten_san_pham, sp.gia_goc, sp.con_ban
+         FROM san_pham sp
+         INNER JOIN danh_muc dm ON dm.id = sp.danh_muc_id
+         WHERE sp.id = :id AND sp.con_ban = 1 AND dm.con_ban = 1
+         LIMIT 1"
+    );
+    $stmt->execute([':id' => $productId]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+/**
+ * Tìm size đang áp dụng của một sản phẩm cụ thể.
+ */
+function findActiveProductSize(int $sizeId, int $productId): ?array
+{
+    if ($sizeId <= 0 || $productId <= 0) {
+        return null;
+    }
+    $pdo = db_connect();
+    $stmt = $pdo->prepare(
+        "SELECT id, san_pham_id, ten_size, gia_cong_them, la_mac_dinh, con_ban
+         FROM bien_the_san_pham
+         WHERE id = :id AND san_pham_id = :product_id AND con_ban = 1
+         LIMIT 1"
+    );
+    $stmt->execute([
+        ':id' => $sizeId,
+        ':product_id' => $productId,
+    ]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+/**
+ * Lấy danh sách topping đang còn bán theo mảng ID người dùng chọn.
+ */
+function getActiveToppingsByIds(array $rawToppingIds): array
+{
+    $ids = array_values(array_unique(array_filter(
+        array_map('intval', $rawToppingIds),
+        static fn(int $id): bool => $id > 0
+    )));
+    if (empty($ids)) {
+        return [];
+    }
+    $pdo = db_connect();
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = $pdo->prepare(
+        "SELECT id, ten_topping, gia_ban
+         FROM topping
+         WHERE con_ban = 1 AND id IN ($placeholders)
+         ORDER BY id ASC"
+    );
+    $stmt->execute($ids);
+    return $stmt->fetchAll();
+}
+
+function getAllToppings(): array
+{
+    $stmt = db_connect()->query("SELECT * FROM topping ORDER BY id ASC");
+    return $stmt ? $stmt->fetchAll() : [];
+}
+
+function findToppingById(int $id): ?array
+{
+    if ($id <= 0) {
+        return null;
+    }
+    $stmt = db_connect()->prepare("SELECT * FROM topping WHERE id = :id LIMIT 1");
+    $stmt->execute([':id' => $id]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+function saveTopping(array $data): bool
+{
+    $pdo = db_connect();
+    $id = isset($data['id']) ? (int) $data['id'] : 0;
+
+    if ($id > 0) {
+        $stmt = $pdo->prepare(
+            "UPDATE topping
+             SET ten_topping = :ten_topping, gia_ban = :gia_ban, con_ban = :con_ban
+             WHERE id = :id"
+        );
+        return $stmt->execute([
+            ':id' => $id,
+            ':ten_topping' => $data['ten_topping'],
+            ':gia_ban' => $data['gia_ban'],
+            ':con_ban' => $data['con_ban'],
+        ]);
+    }
+
+    $stmt = $pdo->prepare(
+        "INSERT INTO topping (ten_topping, gia_ban, con_ban)
+         VALUES (:ten_topping, :gia_ban, :con_ban)"
+    );
+    return $stmt->execute([
+        ':ten_topping' => $data['ten_topping'],
+        ':gia_ban' => $data['gia_ban'],
+        ':con_ban' => $data['con_ban'],
+    ]);
+}
+
+function toggleToppingStatus(int $id): bool
+{
+    $stmt = db_connect()->prepare(
+        "UPDATE topping
+         SET con_ban = CASE WHEN con_ban = 1 THEN 0 ELSE 1 END
+         WHERE id = :id"
+    );
+    return $stmt->execute([':id' => $id]);
+}

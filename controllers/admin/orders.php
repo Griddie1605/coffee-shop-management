@@ -42,18 +42,29 @@ function adminUpdateStatus(): void
 
     $orderId = (int) ($_POST['order_id'] ?? 0);
     $newStatus = (string) ($_POST['trang_thai_don'] ?? '');
+    $returnStatus = (string) ($_POST['return_status'] ?? 'all');
     $allowedStatuses = ['cho_xac_nhan', 'dang_pha_che', 'dang_giao', 'hoan_thanh', 'da_huy'];
+
+    $redirectUrl = BASE_URL . '/?c=admin&a=index';
+    if (in_array($returnStatus, $allowedStatuses, true)) {
+        $redirectUrl .= '&status=' . urlencode($returnStatus);
+    }
 
     if ($orderId <= 0 || !in_array($newStatus, $allowedStatuses, true)) {
         $_SESSION['admin_error'] = 'Dữ liệu cập nhật trạng thái đơn không hợp lệ.';
-        header('Location: ' . BASE_URL . '/?c=admin&a=index');
+        header('Location: ' . $redirectUrl);
         exit;
     }
 
-    updateOrderStatus($orderId, $newStatus);
-    $_SESSION['admin_success'] = 'Đã cập nhật trạng thái đơn hàng.';
+    try {
+        updateOrderStatus($orderId, $newStatus);
+        $_SESSION['admin_success'] = 'Đã cập nhật trạng thái đơn hàng.';
+    } catch (Throwable $e) {
+        $_SESSION['admin_error'] = $e->getMessage() !== ''
+            ? $e->getMessage()
+            : 'Không thể cập nhật trạng thái đơn hàng.';
+    }
 
-    $redirectStatus = (string) ($_POST['return_status'] ?? 'all');
-    header('Location: ' . BASE_URL . '/?c=admin&a=index' . ($redirectStatus !== 'all' ? '&status=' . urlencode($redirectStatus) : ''));
+    header('Location: ' . $redirectUrl);
     exit;
 }

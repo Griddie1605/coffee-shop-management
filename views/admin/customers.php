@@ -161,10 +161,7 @@ $statusLabels = [
                                         <?php foreach ($items as $it): ?>
                                             <li>
                                                 <?= htmlspecialchars((string) $it['ten_san_pham']) ?>
-                                                <?php if (!empty($it['ten_size'])): ?>
-                                                    <span class="text-coffee-muted">(Size <?= htmlspecialchars((string) $it['ten_size']) ?>)</span>
-                                                <?php endif; ?>
-                                                × <?= (int) $it['so_luong'] ?>
+                                                <?= (int) $it['so_luong'] ?>
                                                 — <span class="fw-semibold"><?= format_vnd((float) $it['thanh_tien']) ?></span>
                                             </li>
                                         <?php endforeach; ?>

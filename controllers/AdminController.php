@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Entry point duy nhất của các route admin.
  * Giữ tên AdminController và các hàm action cũ để không thay đổi URL hiện tại.
@@ -22,6 +21,5 @@ function adminRequireStaff(): array
         header('Location: ' . BASE_URL . '/?c=auth&a=login');
         exit;
     }
-
     return $user;
 }

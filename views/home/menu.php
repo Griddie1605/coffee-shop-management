@@ -24,7 +24,6 @@
     <?php if ($selectedCategory !== null && $selectedCategory > 0): ?>
         <input type="hidden" name="category" value="<?= (int) $selectedCategory ?>">
     <?php endif; ?>
-
     <div class="col-sm-9 col-md-10">
         <input
             type="text"
@@ -47,7 +46,6 @@
     >
         Tất cả
     </a>
-
     <?php foreach ($categories as $cat): ?>
         <?php $isActive = ((int) $selectedCategory === (int) $cat['id']); ?>
         <a
@@ -72,7 +70,6 @@
 <?php else: ?>
     <div class="row g-4">
         <?php foreach ($products as $item): ?>
-            <?php $sizes = getProductSizes((int) $item['id']); // Lấy danh sách size riêng của món ?>
             <div class="col-md-4">
                 <div class="card card-coffee h-100">
                     <div class="card-body p-4">
@@ -86,8 +83,6 @@
                     </div>
                     <div class="card-footer bg-transparent border-coffee-soft px-4 py-3 d-flex justify-content-between align-items-center gap-2">
                         <span class="price-moss fs-6"><?= format_vnd((float) $item['gia_goc']) ?></span>
-
-                        <!-- Mở modal chọn chi tiết món khi bấm Thêm món -->
                         <button
                             type="button"
                             class="btn btn-sm btn-moss rounded-pill px-3 btn-open-option-modal"
@@ -96,7 +91,6 @@
                             data-id="<?= (int) $item['id'] ?>"
                             data-name="<?= htmlspecialchars($item['ten_san_pham'], ENT_QUOTES) ?>"
                             data-base-price="<?= (float) $item['gia_goc'] ?>"
-                            data-sizes="<?= htmlspecialchars(json_encode($sizes, JSON_UNESCAPED_UNICODE), ENT_QUOTES) ?>"
                         >
                             Thêm món
                         </button>
@@ -107,7 +101,7 @@
     </div>
 <?php endif; ?>
 
-<!-- Modal chọn Size, Topping, Ghi chú và Số lượng -->
+<!-- Modal chọn Topping, Ghi chú và Số lượng -->
 <div class="modal fade" id="itemOptionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="<?= BASE_URL ?>/?c=cart&a=add" class="modal-content border-coffee-soft">
@@ -118,13 +112,6 @@
             <div class="modal-body">
                 <input type="hidden" name="product_id" id="modalProductId">
 
-                <!-- Chọn size từ bảng bien_the_san_pham -->
-                <div class="mb-3" id="modalSizeWrap">
-                    <label class="form-label small fw-semibold">Chọn Size</label>
-                    <select name="size_id" id="modalSizeSelect" class="form-select form-select-sm border-coffee-soft"></select>
-                </div>
-
-                <!-- Chọn topping từ bảng topping -->
                 <?php if (!empty($toppings)): ?>
                     <div class="mb-3">
                         <div class="small fw-semibold mb-1">Topping thêm</div>
@@ -146,7 +133,6 @@
                     </div>
                 <?php endif; ?>
 
-                <!-- Ghi chú thêm -->
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">Ghi chú thêm</label>
                     <input
@@ -159,7 +145,6 @@
                     >
                 </div>
 
-                <!-- Số lượng -->
                 <div class="d-flex align-items-center justify-content-between">
                     <span class="small fw-semibold">Số lượng</span>
                     <input
@@ -189,20 +174,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const titleEl = document.getElementById('optionModalTitle');
     const productIdEl = document.getElementById('modalProductId');
-    const sizeWrapEl = document.getElementById('modalSizeWrap');
-    const sizeSelectEl = document.getElementById('modalSizeSelect');
     const noteInputEl = document.getElementById('modalNoteInput');
     const qtyInputEl = document.getElementById('modalQtyInput');
     const priceEl = document.getElementById('modalEstimatedPrice');
     const formatter = new Intl.NumberFormat('vi-VN');
 
-    let currentSizes = [];
-
-    // Tính lại tạm tính trên modal theo giá gốc + size + topping + số lượng
     function updateModalPrice() {
         const basePrice = parseFloat(modalEl.dataset.basePrice || '0') || 0;
-        const selectedSize = currentSizes.find(s => String(s.id) === String(sizeSelectEl.value));
-        const sizeExtra = selectedSize ? (parseFloat(selectedSize.gia_cong_them) || 0) : 0;
 
         let toppingExtra = 0;
         modalEl.querySelectorAll('.modal-topping-cb:checked').forEach(cb => {
@@ -214,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         const qty = Math.max(1, parseInt(qtyInputEl.value, 10) || 1);
-        const total = (basePrice + sizeExtra + toppingExtra) * qty;
+        const total = (basePrice + toppingExtra) * qty;
         priceEl.textContent = formatter.format(total) + ' đ';
     }
 
@@ -228,32 +206,10 @@ document.addEventListener('DOMContentLoaded', function () {
             qtyInputEl.value = 1;
             modalEl.querySelectorAll('.modal-topping-cb').forEach(cb => { cb.checked = false; });
 
-            try {
-                currentSizes = JSON.parse(this.dataset.sizes || '[]');
-            } catch (e) {
-                currentSizes = [];
-            }
-
-            sizeSelectEl.innerHTML = '';
-            if (Array.isArray(currentSizes) && currentSizes.length > 0) {
-                sizeWrapEl.classList.remove('d-none');
-                currentSizes.forEach(sz => {
-                    const opt = document.createElement('option');
-                    const extra = parseFloat(sz.gia_cong_them) || 0;
-                    opt.value = sz.id;
-                    opt.textContent = sz.ten_size + (extra > 0 ? ' (+' + formatter.format(extra) + ' đ)' : '');
-                    if (Number(sz.la_mac_dinh) === 1) opt.selected = true;
-                    sizeSelectEl.appendChild(opt);
-                });
-            } else {
-                sizeWrapEl.classList.add('d-none');
-            }
-
             updateModalPrice();
         });
     });
 
-    sizeSelectEl.addEventListener('change', updateModalPrice);
     qtyInputEl.addEventListener('input', updateModalPrice);
     modalEl.querySelectorAll('.modal-topping-cb').forEach(cb => cb.addEventListener('change', updateModalPrice));
 });

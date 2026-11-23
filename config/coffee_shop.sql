@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 23, 2026 lúc 08:10 AM
+-- Thời gian đã tạo: Th10 23, 2026 lúc 10:22 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -36,35 +36,6 @@ CREATE TABLE `bien_the_san_pham` (
   `con_ban` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Đang đổ dữ liệu cho bảng `bien_the_san_pham`
---
-
-INSERT INTO `bien_the_san_pham` (`id`, `san_pham_id`, `ten_size`, `gia_cong_them`, `la_mac_dinh`, `con_ban`) VALUES
-(1, 1, 'S', 0.00, 1, 1),
-(2, 1, 'M', 5000.00, 0, 1),
-(3, 1, 'L', 9000.00, 0, 1),
-(4, 2, 'S', 0.00, 1, 1),
-(5, 2, 'M', 5000.00, 0, 1),
-(6, 2, 'L', 9000.00, 0, 1),
-(7, 3, 'S', 0.00, 1, 1),
-(8, 3, 'M', 6000.00, 0, 1),
-(9, 3, 'L', 10000.00, 0, 1),
-(10, 4, 'S', 0.00, 1, 1),
-(11, 4, 'M', 5000.00, 0, 1),
-(12, 4, 'L', 10000.00, 0, 1),
-(13, 5, 'S', 0.00, 1, 1),
-(14, 5, 'M', 5000.00, 0, 1),
-(15, 5, 'L', 9000.00, 0, 1),
-(16, 6, 'S', 0.00, 1, 1),
-(17, 6, 'M', 6000.00, 0, 1),
-(18, 6, 'L', 10000.00, 0, 1),
-(19, 7, 'M', 0.00, 1, 1),
-(20, 7, 'L', 8000.00, 0, 1),
-(21, 8, '1 cái', 0.00, 1, 1),
-(22, 9, '1 cái', 0.00, 1, 1),
-(23, 10, '1 hũ', 0.00, 1, 1);
-
 -- --------------------------------------------------------
 
 --
@@ -89,15 +60,20 @@ CREATE TABLE `chi_tiet_don_hang` (
 --
 
 INSERT INTO `chi_tiet_don_hang` (`id`, `don_hang_id`, `san_pham_id`, `bien_the_id`, `ten_san_pham`, `ten_size`, `ghi_chu`, `don_gia`, `so_luong`, `thanh_tien`) VALUES
-(1, 1, 10, 23, 'Tiramisu hũ (Size 1 hũ) + Trân châu đen, Thêm shot espresso [Ghi chú: 123456]', '1 hũ', NULL, 52000.00, 1, 52000.00),
-(2, 1, 10, 23, 'Tiramisu hũ (Size 1 hũ)', '1 hũ', NULL, 35000.00, 1, 35000.00),
-(3, 1, 5, 13, 'Trà sữa truyền thống (Size S)', 'S', NULL, 32000.00, 1, 32000.00),
-(4, 1, 3, 7, 'Latte đá (Size S) + Kem cheese [Ghi chú: 3213123123]', 'S', NULL, 45000.00, 1, 45000.00),
-(5, 2, 10, 23, 'Tiramisu hũ (Size 1 hũ)', '1 hũ', NULL, 35000.00, 1, 35000.00),
-(6, 2, 9, 22, 'Bánh su kem (Size 1 cái) + Đào miếng [Ghi chú: 123321]', '1 cái', NULL, 30000.00, 1, 30000.00),
-(7, 2, 5, 15, 'Trà sữa truyền thống (Size L) + Đào miếng [Ghi chú: ít đá ít đường]', 'L', NULL, 49000.00, 3, 147000.00),
-(8, 3, 10, 23, 'Tiramisu hũ (Size 1 hũ) + Đào miếng [Ghi chú: 321123]', '1 hũ', NULL, 43000.00, 1, 43000.00),
-(9, 3, 3, 8, 'Latte đá (Size M) + Thêm shot espresso [Ghi chú: không đá]', 'M', NULL, 51000.00, 1, 51000.00);
+(1, 1, 10, NULL, 'Tiramisu hũ (Size 1 hũ) + Trân châu đen, Thêm shot espresso [Ghi chú: 123456]', '1 hũ', NULL, 52000.00, 1, 52000.00),
+(2, 1, 10, NULL, 'Tiramisu hũ (Size 1 hũ)', '1 hũ', NULL, 35000.00, 1, 35000.00),
+(3, 1, 5, NULL, 'Trà sữa truyền thống (Size S)', 'S', NULL, 32000.00, 1, 32000.00),
+(4, 1, 3, NULL, 'Latte đá (Size S) + Kem cheese [Ghi chú: 3213123123]', 'S', NULL, 45000.00, 1, 45000.00),
+(5, 2, 10, NULL, 'Tiramisu hũ (Size 1 hũ)', '1 hũ', NULL, 35000.00, 1, 35000.00),
+(6, 2, 9, NULL, 'Bánh su kem (Size 1 cái) + Đào miếng [Ghi chú: 123321]', '1 cái', NULL, 30000.00, 1, 30000.00),
+(7, 2, 5, NULL, 'Trà sữa truyền thống (Size L) + Đào miếng [Ghi chú: ít đá ít đường]', 'L', NULL, 49000.00, 3, 147000.00),
+(8, 3, 10, NULL, 'Tiramisu hũ (Size 1 hũ) + Đào miếng [Ghi chú: 321123]', '1 hũ', NULL, 43000.00, 1, 43000.00),
+(9, 3, 3, NULL, 'Latte đá (Size M) + Thêm shot espresso [Ghi chú: không đá]', 'M', NULL, 51000.00, 1, 51000.00),
+(10, 4, 5, NULL, 'Trà sữa truyền thống (Size L) + Đào miếng [Ghi chú: ít đá ít đường]', 'L', NULL, 49000.00, 3, 147000.00),
+(11, 4, 5, NULL, 'Trà sữa truyền thống (Size L) + Đào miếng [Ghi chú: ít ngọt]', 'L', NULL, 49000.00, 4, 196000.00),
+(12, 5, 11, NULL, 'Capuchino', NULL, NULL, 45000.00, 2, 90000.00),
+(13, 6, 12, NULL, 'táo', NULL, NULL, 25000.00, 26, 650000.00),
+(14, 7, 11, NULL, 'Capuchino + Kem cheese', NULL, NULL, 55000.00, 1, 55000.00);
 
 -- --------------------------------------------------------
 
@@ -119,7 +95,12 @@ CREATE TABLE `chi_tiet_phieu_nhap` (
 --
 
 INSERT INTO `chi_tiet_phieu_nhap` (`id`, `phieu_nhap_id`, `nguyen_lieu_id`, `so_luong`, `don_gia_nhap`, `thanh_tien`) VALUES
-(1, 1, 8, 2250.000, 66.67, 150000.08);
+(1, 1, 8, 2250.000, 66.67, 150000.08),
+(2, 2, 9, 2000.000, 35.00, 70000.00),
+(3, 2, 10, 750.000, 40.00, 30000.00),
+(4, 2, 11, 500.000, 240.00, 120000.00),
+(5, 2, 12, 500.000, 50.00, 25000.00),
+(6, 3, 12, 2500.000, 50.00, 125000.00);
 
 -- --------------------------------------------------------
 
@@ -148,7 +129,10 @@ INSERT INTO `cong_thuc_pha_che` (`id`, `san_pham_id`, `nguyen_lieu_id`, `dinh_lu
 (6, 3, 1, 18.000, 'Latte đá'),
 (7, 3, 3, 150.000, 'Sữa tươi'),
 (8, 6, 4, 8.000, 'Matcha latte'),
-(9, 6, 3, 140.000, 'Sữa tươi');
+(9, 6, 3, 140.000, 'Sữa tươi'),
+(10, 11, 1, 20.000, NULL),
+(11, 11, 3, 50.000, NULL),
+(12, 12, 11, 20.000, NULL);
 
 -- --------------------------------------------------------
 
@@ -210,7 +194,11 @@ CREATE TABLE `don_hang` (
 INSERT INTO `don_hang` (`id`, `ma_don_hang`, `nguoi_dung_id`, `ma_giam_gia_id`, `ten_nguoi_nhan`, `sdt_nguoi_nhan`, `hinh_thuc_nhan`, `dia_chi_giao`, `phuong_thuc_thanh_toan`, `trang_thai_thanh_toan`, `tam_tinh`, `tien_giam`, `tong_thanh_toan`, `trang_thai_don`, `da_tru_kho`, `ghi_chu`, `ngay_tao`, `ngay_cap_nhat`) VALUES
 (1, 'DH26112216175338', NULL, NULL, 'Trọng', '123456', 'giao_tan_noi', 'pt', 'tien_mat', 'cho_thanh_toan', 164000.00, 0.00, 164000.00, 'cho_xac_nhan', 0, 'ít đá', '2026-11-22 15:17:53', NULL),
 (2, 'DH26112216302992', NULL, 1, 'Anh Thư', '098765', 'den_quan_lay', NULL, 'chuyen_khoan', 'cho_thanh_toan', 212000.00, 15000.00, 197000.00, 'cho_xac_nhan', 0, 'ít đá, giao nhanh giúp e, cần gấp', '2026-11-22 15:30:29', NULL),
-(3, 'DH26112216573762', 1, 1, 'Quản trị viên quán', '0901000001', 'den_quan_lay', NULL, 'tien_mat', 'cho_thanh_toan', 94000.00, 15000.00, 79000.00, 'dang_giao', 0, 'free duoc khong', '2026-11-22 15:57:37', NULL);
+(3, 'DH26112216573762', 1, 1, 'Quản trị viên quán', '0901000001', 'den_quan_lay', NULL, 'tien_mat', 'cho_thanh_toan', 94000.00, 15000.00, 79000.00, 'dang_giao', 0, 'free duoc khong', '2026-11-22 15:57:37', NULL),
+(4, 'DH26112309230922', 1, NULL, 'Quản trị viên quán', '0901000001', 'giao_tan_noi', '123 Đường 3/2, Long Xuyên, An Giang', 'tien_mat', 'cho_thanh_toan', 343000.00, 0.00, 343000.00, 'cho_xac_nhan', 0, NULL, '2026-11-23 08:23:09', '2026-11-23 08:37:01'),
+(5, 'DH26112309291267', 1, NULL, 'Quản trị viên quán', '0901000001', 'giao_tan_noi', '123 Đường 3/2, Long Xuyên, An Giang', 'tien_mat', 'cho_thanh_toan', 90000.00, 0.00, 90000.00, 'dang_pha_che', 1, NULL, '2026-11-23 08:29:12', '2026-11-23 08:54:50'),
+(6, 'DH26112309575995', 1, NULL, 'Quản trị viên quán', '0901000001', 'giao_tan_noi', '123 Đường 3/2, Long Xuyên, An Giang', 'tien_mat', 'cho_thanh_toan', 650000.00, 0.00, 650000.00, 'da_huy', 0, NULL, '2026-11-23 08:57:59', '2026-11-23 08:58:15'),
+(7, 'DH26112310160816', 1, NULL, 'Quản trị viên quán', '0901000001', 'giao_tan_noi', '123 Đường 3/2, Long Xuyên, An Giang', 'chuyen_khoan', 'cho_thanh_toan', 55000.00, 0.00, 55000.00, 'da_huy', 0, NULL, '2026-11-23 09:16:08', '2026-11-23 09:20:18');
 
 -- --------------------------------------------------------
 
@@ -235,7 +223,18 @@ CREATE TABLE `lich_su_kho` (
 
 INSERT INTO `lich_su_kho` (`id`, `nguyen_lieu_id`, `loai_bien_dong`, `so_luong_thay_doi`, `ton_sau_bien_dong`, `ma_tham_chieu`, `ghi_chu`, `ngay_tao`) VALUES
 (1, 8, 'nhap_kho', 2250.000, 2250.000, 'PN26112307571099', 'Nhập kho nguyên liệu', '2026-11-23 06:57:10'),
-(2, 8, 'xuat_huy', -50.000, 2200.000, 'XH26112308012023', 'làm hư món', '2026-11-23 07:01:20');
+(2, 8, 'xuat_huy', -50.000, 2200.000, 'XH26112308012023', 'làm hư món', '2026-11-23 07:01:20'),
+(3, 9, 'nhap_kho', 2000.000, 2000.000, 'PN26112309263745', 'nhập hàng tuần', '2026-11-23 08:26:37'),
+(4, 10, 'nhap_kho', 750.000, 750.000, 'PN26112309263745', 'nhập hàng tuần', '2026-11-23 08:26:37'),
+(5, 11, 'nhap_kho', 500.000, 500.000, 'PN26112309263745', 'nhập hàng tuần', '2026-11-23 08:26:37'),
+(6, 12, 'nhap_kho', 500.000, 500.000, 'PN26112309263745', 'nhập hàng tuần', '2026-11-23 08:26:37'),
+(7, 12, 'nhap_kho', 2500.000, 3000.000, 'PN26112309274355', 'nhập ngày 23.11', '2026-11-23 08:27:43'),
+(8, 1, 'xuat_ban', -40.000, 4960.000, 'DH26112309291267', 'Trừ kho tự động khi xử lý đơn DH26112309291267', '2026-11-23 08:36:59'),
+(9, 3, 'xuat_ban', -100.000, 7900.000, 'DH26112309291267', 'Trừ kho tự động khi xử lý đơn DH26112309291267', '2026-11-23 08:36:59'),
+(10, 1, 'hoan_don', 40.000, 5000.000, 'DH26112309291267', 'Hoàn kho tự động khi hủy đơn DH26112309291267', '2026-11-23 08:54:27'),
+(11, 3, 'hoan_don', 100.000, 8000.000, 'DH26112309291267', 'Hoàn kho tự động khi hủy đơn DH26112309291267', '2026-11-23 08:54:27'),
+(12, 1, 'xuat_ban', -40.000, 4960.000, 'DH26112309291267', 'Trừ kho tự động khi xử lý đơn DH26112309291267', '2026-11-23 08:54:50'),
+(13, 3, 'xuat_ban', -100.000, 7900.000, 'DH26112309291267', 'Trừ kho tự động khi xử lý đơn DH26112309291267', '2026-11-23 08:54:50');
 
 -- --------------------------------------------------------
 
@@ -311,12 +310,16 @@ CREATE TABLE `nguyen_lieu` (
 --
 
 INSERT INTO `nguyen_lieu` (`id`, `ma_nguyen_lieu`, `ten_nguyen_lieu`, `don_vi_tinh`, `ton_kho_hien_tai`, `nguong_canh_bao`, `trang_thai`, `ngay_tao`) VALUES
-(1, 'NL001', 'Cà phê hạt rang xay', 'g', 5000.000, 800.000, 1, '2026-11-23 06:16:20'),
+(1, 'NL001', 'Cà phê hạt rang xay', 'g', 4960.000, 800.000, 1, '2026-11-23 06:16:20'),
 (2, 'NL002', 'Sữa đặc có đường', 'ml', 6000.000, 1000.000, 1, '2026-11-23 06:16:20'),
-(3, 'NL003', 'Sữa tươi thanh trùng', 'ml', 8000.000, 1500.000, 1, '2026-11-23 06:16:20'),
+(3, 'NL003', 'Sữa tươi thanh trùng', 'ml', 7900.000, 1500.000, 1, '2026-11-23 06:16:20'),
 (4, 'NL004', 'Bột Matcha Nhật', 'g', 1500.000, 300.000, 1, '2026-11-23 06:16:20'),
 (5, 'NL005', 'Đường nước / Đường cát', 'g', 5000.000, 1000.000, 1, '2026-11-23 06:16:20'),
-(8, 'NL006', 'Syrup Caramel', 'ml', 2200.000, 1500.000, 1, '2026-11-23 06:50:37');
+(8, 'NL006', 'Syrup Caramel', 'ml', 2200.000, 1500.000, 1, '2026-11-23 06:50:37'),
+(9, 'NL007', 'Sữa tươi', 'ml', 2000.000, 2000.000, 1, '2026-11-23 08:24:37'),
+(10, 'NL008', 'Syrup Đào', 'ml', 750.000, 1500.000, 1, '2026-11-23 08:25:01'),
+(11, 'NL009', 'Mật ong', 'ml', 500.000, 500.000, 1, '2026-11-23 08:25:16'),
+(12, 'NL010', 'Trà đen', 'g', 3000.000, 1000.000, 1, '2026-11-23 08:25:29');
 
 -- --------------------------------------------------------
 
@@ -339,7 +342,9 @@ CREATE TABLE `phieu_nhap_kho` (
 --
 
 INSERT INTO `phieu_nhap_kho` (`id`, `ma_phieu_nhap`, `ten_nha_cung_cap`, `nguoi_tao_id`, `tong_tien`, `ghi_chu`, `ngay_nhap`) VALUES
-(1, 'PN26112307571099', 'Kho Khởi Minh Long Xuyên', 1, 150000.08, NULL, '2026-11-23 06:57:10');
+(1, 'PN26112307571099', 'Kho Khởi Minh Long Xuyên', 1, 150000.08, NULL, '2026-11-23 06:57:10'),
+(2, 'PN26112309263745', 'Kho Khởi Minh Long Xuyên', 1, 245000.00, 'nhập hàng tuần', '2026-11-23 08:26:37'),
+(3, 'PN26112309274355', 'Kho Khởi Minh Long Xuyên', 1, 125000.00, 'nhập ngày 23.11', '2026-11-23 08:27:43');
 
 -- --------------------------------------------------------
 
@@ -544,19 +549,19 @@ ALTER TABLE `bien_the_san_pham`
 -- AUTO_INCREMENT cho bảng `chi_tiet_don_hang`
 --
 ALTER TABLE `chi_tiet_don_hang`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT cho bảng `chi_tiet_phieu_nhap`
 --
 ALTER TABLE `chi_tiet_phieu_nhap`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT cho bảng `cong_thuc_pha_che`
 --
 ALTER TABLE `cong_thuc_pha_che`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT cho bảng `danh_muc`
@@ -568,13 +573,13 @@ ALTER TABLE `danh_muc`
 -- AUTO_INCREMENT cho bảng `don_hang`
 --
 ALTER TABLE `don_hang`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT cho bảng `lich_su_kho`
 --
 ALTER TABLE `lich_su_kho`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT cho bảng `ma_giam_gia`
@@ -592,13 +597,13 @@ ALTER TABLE `nguoi_dung`
 -- AUTO_INCREMENT cho bảng `nguyen_lieu`
 --
 ALTER TABLE `nguyen_lieu`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT cho bảng `phieu_nhap_kho`
 --
 ALTER TABLE `phieu_nhap_kho`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `san_pham`

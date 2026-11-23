@@ -4,9 +4,9 @@ require_once __DIR__ . '/../models/ProductModel.php';
 require_once __DIR__ . '/../models/VoucherModel.php';
 
 /**
- * Tính lại thông tin món, size, topping và đơn giá từ CSDL để chống chỉnh sửa giá phía client.
+ * Tính lại thông tin món, topping và đơn giá từ CSDL để chống chỉnh sửa giá phía client.
  */
-function buildValidatedCartItem(int $productId, int $sizeId, array $rawToppingIds, string $note, int $qty): ?array
+function buildValidatedCartItem(int $productId, array $rawToppingIds, string $note, int $qty): ?array
 {
     $product = findActiveProductById($productId);
     if (!$product) {
@@ -14,17 +14,6 @@ function buildValidatedCartItem(int $productId, int $sizeId, array $rawToppingId
     }
 
     $unitPrice = (float) $product['gia_goc'];
-    $sizeName = '';
-
-    if ($sizeId > 0) {
-        $sizeRow = findActiveProductSize($sizeId, $productId);
-        if ($sizeRow) {
-            $sizeName = (string) $sizeRow['ten_size'];
-            $unitPrice += (float) $sizeRow['gia_cong_them'];
-        } else {
-            $sizeId = 0;
-        }
-    }
 
     $toppingRows = getActiveToppingsByIds($rawToppingIds);
     $toppingIds = [];
@@ -35,17 +24,13 @@ function buildValidatedCartItem(int $productId, int $sizeId, array $rawToppingId
         $unitPrice += (float) $top['gia_ban'];
     }
 
-    // Tách dòng giỏ hàng khi món, size, topping hoặc ghi chú khác nhau.
+    // Tách dòng giỏ hàng khi món, topping hoặc ghi chú khác nhau.
     $noteHash = $note !== '' ? md5($note) : '0';
     $key = 'p_' . $productId
-        . '_s_' . $sizeId
         . '_t_' . (!empty($toppingIds) ? implode('-', $toppingIds) : '0')
         . '_n_' . $noteHash;
 
     $displayName = (string) $product['ten_san_pham'];
-    if ($sizeName !== '') {
-        $displayName .= ' (Size ' . $sizeName . ')';
-    }
     if (!empty($toppingNames)) {
         $displayName .= ' + ' . implode(', ', $toppingNames);
     }
@@ -55,7 +40,6 @@ function buildValidatedCartItem(int $productId, int $sizeId, array $rawToppingId
         'product_name' => (string) $product['ten_san_pham'],
         'item' => [
             'product_id' => $productId,
-            'size_id' => $sizeId,
             'topping_ids' => $toppingIds,
             'name' => $displayName,
             'note' => $note,
@@ -76,12 +60,11 @@ function cartAdd(): void
     }
 
     $productId = (int) ($_POST['product_id'] ?? 0);
-    $sizeId = (int) ($_POST['size_id'] ?? 0);
     $rawToppingIds = is_array($_POST['topping_ids'] ?? null) ? $_POST['topping_ids'] : [];
     $qty = max(1, (int) ($_POST['qty'] ?? 1));
     $note = mb_substr(trim((string) ($_POST['note'] ?? '')), 0, 200);
 
-    $built = buildValidatedCartItem($productId, $sizeId, $rawToppingIds, $note, $qty);
+    $built = buildValidatedCartItem($productId, $rawToppingIds, $note, $qty);
     if ($built === null) {
         $_SESSION['flash_message'] = 'Món không tồn tại hoặc đã ngừng bán.';
         header('Location: ' . BASE_URL . '/?c=home&a=menu');
@@ -105,26 +88,20 @@ function cartAdd(): void
 }
 
 /**
- * Hiển thị giỏ hàng kèm danh sách size/topping để chỉnh sửa trực tiếp.
+ * Hiển thị giỏ hàng kèm danh sách topping để chỉnh sửa trực tiếp.
  */
 function cartIndex(): void
 {
     $cartItems = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
     $totalAmount = 0.0;
-    $sizesByProduct = [];
-
     foreach ($cartItems as $item) {
         $totalAmount += ((float) ($item['price'] ?? 0)) * ((int) ($item['qty'] ?? 1));
-        $pid = (int) ($item['product_id'] ?? 0);
-        if ($pid > 0 && !isset($sizesByProduct[$pid])) {
-            $sizesByProduct[$pid] = getProductSizes($pid);
-        }
     }
 
     $toppings = getActiveToppings();
+
     $discountAmount = 0.0;
     $appliedVoucher = isset($_SESSION['voucher']) && is_array($_SESSION['voucher']) ? $_SESSION['voucher'] : null;
-
     if ($appliedVoucher !== null && $totalAmount > 0) {
         $expired = !empty($appliedVoucher['ngay_het_han']) && strtotime((string) $appliedVoucher['ngay_het_han']) < time();
         if ($expired || $totalAmount < (float) ($appliedVoucher['don_toi_thieu'] ?? 0)) {
@@ -140,7 +117,6 @@ function cartIndex(): void
     render('cart/index', [
         'pageTitle' => 'Giỏ hàng - 47th cafe',
         'cartItems' => $cartItems,
-        'sizesByProduct' => $sizesByProduct,
         'toppings' => $toppings,
         'totalAmount' => $totalAmount,
         'appliedVoucher' => $appliedVoucher,
@@ -189,13 +165,12 @@ function cartRemove(): void
         unset($_SESSION['cart'][$key]);
         $_SESSION['cart_message'] = 'Đã xóa món khỏi giỏ hàng.';
     }
-
     header('Location: ' . BASE_URL . '/?c=cart&a=index');
     exit;
 }
 
 /**
- * Sửa lại size, topping, ghi chú hoặc số lượng của một dòng đang có trong giỏ.
+ * Sửa lại topping, ghi chú hoặc số lượng của một dòng đang có trong giỏ.
  */
 function cartEdit(): void
 {
@@ -211,12 +186,11 @@ function cartEdit(): void
     }
 
     $productId = (int) ($_SESSION['cart'][$oldKey]['product_id'] ?? 0);
-    $sizeId = (int) ($_POST['size_id'] ?? 0);
     $rawToppingIds = is_array($_POST['topping_ids'] ?? null) ? $_POST['topping_ids'] : [];
     $qty = max(1, min(50, (int) ($_POST['qty'] ?? 1)));
     $note = mb_substr(trim((string) ($_POST['note'] ?? '')), 0, 200);
 
-    $built = buildValidatedCartItem($productId, $sizeId, $rawToppingIds, $note, $qty);
+    $built = buildValidatedCartItem($productId, $rawToppingIds, $note, $qty);
     unset($_SESSION['cart'][$oldKey]);
 
     if ($built === null) {
@@ -245,11 +219,9 @@ function calculateVoucherDiscount(array $voucher, float $subtotal): float
     if ($subtotal <= 0 || $subtotal < (float) ($voucher['don_toi_thieu'] ?? 0)) {
         return 0.0;
     }
-
     $type = (string) ($voucher['kieu_giam'] ?? 'so_tien');
     $value = (float) ($voucher['gia_tri_giam'] ?? 0);
     $discount = ($type === 'phan_tram') ? ($subtotal * ($value / 100.0)) : $value;
-
     return min($subtotal, max(0.0, round($discount, 2)));
 }
 

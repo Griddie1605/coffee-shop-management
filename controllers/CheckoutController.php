@@ -144,7 +144,7 @@ function checkoutPlaceOrder(): void
         header('Location: ' . BASE_URL . '/?c=checkout&a=success');
         exit;
     } catch (Throwable $e) {
-        $_SESSION['checkout_error'] = 'Không thể lưu đơn hàng lúc này. Vui lòng thử lại.';
+        $_SESSION['checkout_error'] = 'Không thể lưu đơn hàng lúc này. Vui lòng thử lại.' . $e->getMessage();
         header('Location: ' . BASE_URL . '/?c=checkout&a=index');
         exit;
     }

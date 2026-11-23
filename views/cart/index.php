@@ -41,20 +41,12 @@
                 <tbody>
                     <?php foreach ($cartItems as $key => $item): ?>
                         <?php
-                        // Giỏ hàng hiển thị giá đã được tính ở server; JS chỉ hỗ trợ xem trước, không thay dữ liệu giá lưu trong session.
                         $price = (float) ($item['price'] ?? 0);
                         $qty = (int) ($item['qty'] ?? 1);
                         $lineTotal = $price * $qty;
-                        $pid = (int) ($item['product_id'] ?? 0);
-                        $itemSizes = $sizesByProduct[$pid] ?? [];
                         $itemToppings = array_map('intval', (array) ($item['topping_ids'] ?? []));
+
                         $basePrice = $price;
-                        foreach ($itemSizes as $sz) {
-                            if ((int) $sz['id'] === (int) ($item['size_id'] ?? 0)) {
-                                $basePrice -= (float) $sz['gia_cong_them'];
-                                break;
-                            }
-                        }
                         if (!empty($toppings) && !empty($itemToppings)) {
                             foreach ($toppings as $tp) {
                                 if (in_array((int) $tp['id'], $itemToppings, true)) {
@@ -87,7 +79,6 @@
                             </td>
                             <td class="text-end text-nowrap price-moss"><?= format_vnd($lineTotal) ?></td>
                             <td class="text-end text-nowrap">
-                                <!-- Mở modal sửa size, topping, ghi chú và số lượng của dòng này -->
                                 <button
                                     type="button"
                                     class="btn btn-sm btn-outline-dark rounded-pill px-2 me-1 btn-edit-cart-item"
@@ -95,12 +86,10 @@
                                     data-bs-target="#editCartItemModal"
                                     data-old-key="<?= htmlspecialchars((string) $key, ENT_QUOTES) ?>"
                                     data-name="<?= htmlspecialchars((string) ($item['name'] ?? ''), ENT_QUOTES) ?>"
-                                    data-size-id="<?= (int) ($item['size_id'] ?? 0) ?>"
                                     data-topping-ids="<?= htmlspecialchars(json_encode($itemToppings), ENT_QUOTES) ?>"
                                     data-note="<?= htmlspecialchars((string) ($item['note'] ?? ''), ENT_QUOTES) ?>"
                                     data-qty="<?= $qty ?>"
                                     data-base-price="<?= $basePrice ?>"
-                                    data-sizes="<?= htmlspecialchars(json_encode($itemSizes, JSON_UNESCAPED_UNICODE), ENT_QUOTES) ?>"
                                 >
                                     Sửa
                                 </button>
@@ -123,7 +112,6 @@
             <button type="submit" class="btn btn-outline-dark rounded-pill px-4">
                 Cập nhật số lượng
             </button>
-
             <div class="d-flex flex-wrap align-items-center gap-3">
                 <div class="fs-5">
                     <span>Tổng tạm tính:</span>
@@ -146,11 +134,6 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="old_key" id="editOldKey">
-
-                    <div class="mb-3" id="editSizeWrap">
-                        <label class="form-label small fw-semibold">Chọn Size</label>
-                        <select name="size_id" id="editSizeSelect" class="form-select form-select-sm border-coffee-soft"></select>
-                    </div>
 
                     <?php if (!empty($toppings)): ?>
                         <div class="mb-3">
@@ -206,46 +189,47 @@
             </form>
         </div>
     </div>
-           <!-- Khối mã giảm giá đặt tách rời khỏi form cập nhật số lượng -->       
-            <div class="card card-coffee p-4 mt-3">
-                            <div class="row g-3 align-items-center justify-content-between">
-                                <div class="col-md-6">
-                                    <form method="POST" action="<?= BASE_URL ?>/?c=cart&a=applyVoucher" class="d-flex gap-2">
-                                        <input
-                                            type="text"
-                                            name="voucher_code"
-                                            class="form-control form-control-sm border-coffee-soft text-uppercase"
-                                            placeholder="Nhập mã giảm giá (ví dụ: GIAM10K, SALE15)"
-                                            value="<?= htmlspecialchars((string) ($appliedVoucher['ma_code'] ?? '')) ?>"
-                                        >
-                                        <button type="submit" class="btn btn-sm btn-moss rounded-pill px-3 text-nowrap">
-                                            Áp dụng
-                                        </button>
-                                        <?php if (!empty($appliedVoucher)): ?>
-                                            <a
-                                                href="<?= BASE_URL ?>/?c=cart&a=removeVoucher"
-                                                class="btn btn-sm btn-outline-danger rounded-pill px-3 text-nowrap"
-                                            >
-                                                Gỡ mã
-                                            </a>
-                                        <?php endif; ?>
-                                    </form>
-                                </div>
 
-                                <div class="col-md-6 text-md-end">
-                                    <?php if ($discountAmount > 0): ?>
-                                        <div class="small text-coffee-muted">
-                                            Giảm giá (<?= htmlspecialchars((string) ($appliedVoucher['ma_code'] ?? '')) ?>):
-                                            <strong class="text-success">-<?= format_vnd($discountAmount) ?></strong>
-                                        </div>
-                                    <?php endif; ?>
-                                    <div class="fs-5 mt-1">
-                                        <span>Thanh toán:</span>
-                                        <strong class="price-moss ms-2"><?= format_vnd($finalAmount) ?></strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> 
+    <!-- Khối mã giảm giá -->
+    <div class="card card-coffee p-4 mt-3">
+        <div class="row g-3 align-items-center justify-content-between">
+            <div class="col-md-6">
+                <form method="POST" action="<?= BASE_URL ?>/?c=cart&a=applyVoucher" class="d-flex gap-2">
+                    <input
+                        type="text"
+                        name="voucher_code"
+                        class="form-control form-control-sm border-coffee-soft text-uppercase"
+                        placeholder="Nhập mã giảm giá (ví dụ: CHAO15K, CAFE10)"
+                        value="<?= htmlspecialchars((string) ($appliedVoucher['ma_code'] ?? '')) ?>"
+                    >
+                    <button type="submit" class="btn btn-sm btn-moss rounded-pill px-3 text-nowrap">
+                        Áp dụng
+                    </button>
+                    <?php if (!empty($appliedVoucher)): ?>
+                        <a
+                            href="<?= BASE_URL ?>/?c=cart&a=removeVoucher"
+                            class="btn btn-sm btn-outline-danger rounded-pill px-3 text-nowrap"
+                        >
+                            Gỡ mã
+                        </a>
+                    <?php endif; ?>
+                </form>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <?php if ($discountAmount > 0): ?>
+                    <div class="small text-coffee-muted">
+                        Giảm giá (<?= htmlspecialchars((string) ($appliedVoucher['ma_code'] ?? '')) ?>):
+                        <strong class="text-success">-<?= format_vnd($discountAmount) ?></strong>
+                    </div>
+                <?php endif; ?>
+                <div class="fs-5 mt-1">
+                    <span>Thanh toán:</span>
+                    <strong class="price-moss ms-2"><?= format_vnd($finalAmount) ?></strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const cartForm = document.querySelector('form[action*="c=cart&a=update"]');
@@ -268,6 +252,7 @@
                     lineTotalEl.textContent = formatter.format(lineTotal) + ' đ';
                     grandTotal += lineTotal;
                 });
+
                 if (totalEl) {
                     totalEl.textContent = formatter.format(grandTotal) + ' đ';
                 }
@@ -284,18 +269,13 @@
 
         const oldKeyEl = document.getElementById('editOldKey');
         const titleEl = document.getElementById('editModalTitle');
-        const sizeWrapEl = document.getElementById('editSizeWrap');
-        const sizeSelectEl = document.getElementById('editSizeSelect');
         const noteInputEl = document.getElementById('editNoteInput');
         const qtyInputEl = document.getElementById('editQtyInput');
         const priceEl = document.getElementById('editEstimatedPrice');
         const formatter = new Intl.NumberFormat('vi-VN');
-        let currentSizes = [];
 
         function updateEditPrice() {
             const basePrice = parseFloat(editModalEl.dataset.basePrice || '0') || 0;
-            const selectedSize = currentSizes.find(s => String(s.id) === String(sizeSelectEl.value));
-            const sizeExtra = selectedSize ? (parseFloat(selectedSize.gia_cong_them) || 0) : 0;
 
             let toppingExtra = 0;
             editModalEl.querySelectorAll('.edit-topping-cb:checked').forEach(cb => {
@@ -307,7 +287,7 @@
             });
 
             const qty = Math.max(1, parseInt(qtyInputEl.value, 10) || 1);
-            priceEl.textContent = formatter.format((basePrice + sizeExtra + toppingExtra) * qty) + ' đ';
+            priceEl.textContent = formatter.format((basePrice + toppingExtra) * qty) + ' đ';
         }
 
         document.querySelectorAll('.btn-edit-cart-item').forEach(btn => {
@@ -324,27 +304,10 @@
                     cb.checked = selectedToppings.includes(Number(cb.value));
                 });
 
-                try { currentSizes = JSON.parse(this.dataset.sizes || '[]'); } catch (e) { currentSizes = []; }
-                sizeSelectEl.innerHTML = '';
-                if (Array.isArray(currentSizes) && currentSizes.length > 0) {
-                    sizeWrapEl.classList.remove('d-none');
-                    currentSizes.forEach(sz => {
-                        const opt = document.createElement('option');
-                        const extra = parseFloat(sz.gia_cong_them) || 0;
-                        opt.value = sz.id;
-                        opt.textContent = sz.ten_size + (extra > 0 ? ' (+' + formatter.format(extra) + ' đ)' : '');
-                        if (String(sz.id) === String(this.dataset.sizeId || '')) opt.selected = true;
-                        sizeSelectEl.appendChild(opt);
-                    });
-                } else {
-                    sizeWrapEl.classList.add('d-none');
-                }
-
                 updateEditPrice();
             });
         });
 
-        sizeSelectEl.addEventListener('change', updateEditPrice);
         qtyInputEl.addEventListener('input', updateEditPrice);
         editModalEl.querySelectorAll('.edit-topping-cb').forEach(cb => cb.addEventListener('change', updateEditPrice));
     });
