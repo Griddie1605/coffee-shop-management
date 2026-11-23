@@ -10,6 +10,7 @@ require_once __DIR__ . '/admin/catalog.php';
 require_once __DIR__ . '/admin/dashboard.php';
 require_once __DIR__ . '/admin/customers.php';
 require_once __DIR__ . '/admin/options.php';
+require_once __DIR__ . '/admin/inventory.php';
 
 /**
  * Kiểm tra quyền nhân viên/quản trị trước khi bất kỳ action admin nào xử lý request.

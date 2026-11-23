@@ -3,11 +3,11 @@ $curA = $_GET['a'] ?? 'dashboard';
 $navItems = [
     'dashboard' => ['label' => 'Tổng quan',              'href' => BASE_URL . '/?c=admin&a=dashboard'],
     'index'     => ['label' => 'Quản trị đơn hàng',      'href' => BASE_URL . '/?c=admin&a=index'],
+    'inventory' => ['label' => 'Kho nguyên liệu',        'href' => BASE_URL . '/?c=admin&a=inventory'],
     'catalog'   => ['label' => 'Quản lý món & danh mục', 'href' => BASE_URL . '/?c=admin&a=catalog'],
-    'customers'  => ['label' => 'Quản lý khách hàng',     'href' => BASE_URL . '/?c=admin&a=customers'],
-    ];
+    'customers' => ['label' => 'Quản lý khách hàng',     'href' => BASE_URL . '/?c=admin&a=customers'],
+];
 ?>
-
 <aside class="admin-sidebar border-end">
     <div class="admin-sidebar-inner py-4 px-3">
         <div class="small text-uppercase fw-bold text-coffee-muted px-3 mb-2">
